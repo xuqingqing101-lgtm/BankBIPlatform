@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -9,20 +9,16 @@ import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
 import { Upload, FileSpreadsheet, Trash2, Plus, Save, Play, CheckCircle2, AlertCircle, RefreshCw, Database, Tag, BarChart2, Settings } from 'lucide-react';
 import { toast } from 'sonner';
+import { uploadData, getDataTables } from '../lib/api';
 
-// 模拟的已上传数据表
-const initialTables = [
-  { id: 't1', name: 'deposit_2024.xlsx', size: '2.5 MB', date: '2024-03-15', status: '已清洗', rows: 12580 },
-  { id: 't2', name: 'loan_summary_q1.csv', size: '1.8 MB', date: '2024-03-14', status: '待处理', rows: 5420 },
-];
-
-// 模拟的字段信息
-const mockFields = [
-  { name: 'cust_id', type: 'String', label: '客户号', category: '维度' },
-  { name: 'org_code', type: 'String', label: '机构代码', category: '维度' },
-  { name: 'balance', type: 'Decimal', label: '余额', category: '指标' },
-  { name: 'open_date', type: 'Date', label: '开户日期', category: '时间' },
-];
+interface TableData {
+  id: string;
+  name: string;
+  size: string;
+  date: string;
+  status: string;
+  rows: number;
+}
 
 // 模拟的指标定义
 const initialMetrics = [
@@ -32,44 +28,68 @@ const initialMetrics = [
 
 export function DataManager() {
   const [activeTab, setActiveTab] = useState('import');
-  const [tables, setTables] = useState(initialTables);
+  const [tables, setTables] = useState<TableData[]>([]);
   const [metrics, setMetrics] = useState(initialMetrics);
   const [uploading, setUploading] = useState(false);
   
-  // 模拟上传
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 加载数据表
+  useEffect(() => {
+    loadTables();
+  }, []);
+
+  const loadTables = async () => {
+    try {
+      const response = await getDataTables();
+      if (response.success) {
+        const mappedTables = response.data.map((t: any) => ({
+          id: t.id,
+          name: t.displayName,
+          size: '-',
+          date: t.createdTime?.split('T')[0] || '-',
+          status: '已清洗', // 后端直接存库，视为已处理
+          rows: t.rowCount
+        }));
+        setTables(mappedTables);
+      }
+    } catch (error) {
+      console.error('Failed to load tables', error);
+    }
+  };
+  
+  // 处理上传
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setUploading(true);
-      setTimeout(() => {
-        setTables(prev => [{
-          id: `t${Date.now()}`,
-          name: file.name,
-          size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-          date: new Date().toISOString().split('T')[0],
-          status: '待处理',
-          rows: 0
-        }, ...prev]);
+      try {
+        const response = await uploadData(file);
+        if (response.success) {
+          toast.success('文件上传成功', { description: '数据已自动清洗并存入数据库' });
+          await loadTables();
+        } else {
+          toast.error('上传失败', { description: response.message });
+        }
+      } catch (error) {
+        toast.error('上传出错', { description: String(error) });
+      } finally {
         setUploading(false);
-        toast.success('文件上传成功', { description: '请前往“数据清洗”页面进行处理' });
-      }, 1500);
+      }
     }
   };
 
-  // 模拟清洗
+  // 模拟清洗 (已废弃，后端自动处理)
   const handleClean = (id: string) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 2000)),
-      {
-        loading: '正在执行清洗规则...',
-        success: () => {
-          setTables(prev => prev.map(t => t.id === id ? { ...t, status: '已清洗', rows: Math.floor(Math.random() * 10000) + 1000 } : t));
-          return '数据清洗完成：已去除重复行、填充缺失值';
-        },
-        error: '清洗失败'
-      }
-    );
+    toast.info('数据已由后端自动清洗');
   };
+
+  // 模拟字段 (实际应从后端获取列信息)
+  const mockFields = [
+    { name: 'cust_id', type: 'VARCHAR', label: '客户号', category: '维度' },
+    { name: 'org_code', type: 'VARCHAR', label: '机构代码', category: '维度' },
+    { name: 'balance', type: 'DOUBLE', label: '余额', category: '指标' },
+    { name: 'open_date', type: 'DATE', label: '开户日期', category: '时间' },
+    { name: 'age', type: 'INT', label: '年龄', category: '维度' },
+  ];
 
   return (
     <div className="space-y-6 p-6 pb-20">
@@ -331,7 +351,14 @@ export function DataManager() {
                       {mockFields.map((field, i) => (
                         <TableRow key={i} className="border-slate-700 hover:bg-slate-700/50">
                           <TableCell className="font-mono text-slate-300">{field.name}</TableCell>
-                          <TableCell className="text-slate-400">{field.type}</TableCell>
+                          <TableCell>
+                            <select defaultValue={field.type} className="h-8 bg-slate-800 border border-slate-600 rounded text-sm text-white px-2 cursor-pointer hover:bg-slate-700 focus:ring-2 focus:ring-blue-500/50 outline-none transition-colors">
+                              <option value="VARCHAR" className="bg-slate-800">VARCHAR (文本)</option>
+                              <option value="INT" className="bg-slate-800">INT (整数)</option>
+                              <option value="DOUBLE" className="bg-slate-800">DOUBLE (小数)</option>
+                              <option value="DATE" className="bg-slate-800">DATE (日期)</option>
+                            </select>
+                          </TableCell>
                           <TableCell>
                             <Input defaultValue={field.label} className="h-8 bg-slate-900 border-slate-600 text-white" />
                           </TableCell>

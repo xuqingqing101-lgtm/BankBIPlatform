@@ -59,9 +59,9 @@ jwt:
 # HiAgent配置
 hiagent:
   # 请替换为您的HiAgent API配置
-  api-url: https://api.hiagent.bytedance.com/v1
+  api-url: https://api.deepseek.com
   api-key: ${HIAGENT_API_KEY:sk-cd3054f2de594320bbd78d5a14e75284}
-  model: hiagent-pro
+  model: deepseek-chat
   timeout: 30000  # 30秒
   max-tokens: 2000
   temperature: 0.7

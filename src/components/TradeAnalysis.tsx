@@ -47,10 +47,10 @@ const defaultApprovalData = [
 
 // 网点业务数据
 const defaultBranchData = [
-  { branch: '市中心支行', loanVolume: 285, deposits: 520, customers: 8560, efficiency: 95, rating: '优秀' },
-  { branch: '高新区支行', loanVolume: 210, deposits: 380, customers: 6240, efficiency: 88, rating: '良好' },
-  { branch: '开发区支行', loanVolume: 195, deposits: 420, customers: 5890, efficiency: 92, rating: '优秀' },
-  { branch: '老城区支行', loanVolume: 165, deposits: 450, customers: 9320, efficiency: 85, rating: '良好' },
+  { branch: '北京分行', loanVolume: 285, deposits: 520, customers: 8560, efficiency: 95, rating: '优秀' },
+  { branch: '上海分行', loanVolume: 210, deposits: 380, customers: 6240, efficiency: 88, rating: '良好' },
+  { branch: '广东分行', loanVolume: 195, deposits: 420, customers: 5890, efficiency: 92, rating: '优秀' },
+  { branch: '浙江分行', loanVolume: 165, deposits: 450, customers: 9320, efficiency: 85, rating: '良好' },
 ];
 
 const exampleQueries = [
@@ -98,8 +98,8 @@ const loanInsights: Insight[] = [
   },
   {
     type: 'opportunity',
-    title: '市中心支行表现突出，可作为标杆推广',
-    description: '市中心支行贷款投放285亿，客户满意度95%，评级优秀。建议总结经验，在其他网点推广高效服务模式。',
+    title: '北京分行表现突出，可作为标杆推广',
+    description: '北京分行贷款投放285亿，客户满意度95%，评级优秀。建议总结经验，在其他网点推广高效服务模式。',
     impact: 'medium',
     priority: 6
   }

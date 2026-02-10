@@ -6,6 +6,8 @@ com\bank\bi\service\HiAgentService.class
 com\bank\bi\controller\DepositController.class
 com\bank\bi\model\entity\Message.class
 com\bank\bi\model\dto\HiAgentResponse$Usage.class
+com\bank\bi\model\entity\data\DataColumn.class
+com\bank\bi\repository\data\DataTableRepository.class
 com\bank\bi\util\ResponseUtil$Result.class
 com\bank\bi\model\dto\HiAgentRequest.class
 com\bank\bi\util\ResponseUtil.class
@@ -30,13 +32,16 @@ com\bank\bi\model\entity\PanelItem$PanelItemBuilder.class
 com\bank\bi\model\dto\ChatRequest.class
 com\bank\bi\model\dto\HiAgentResponse.class
 com\bank\bi\service\IntermediateService.class
+com\bank\bi\repository\data\DataColumnRepository.class
 com\bank\bi\controller\CustomerController.class
 com\bank\bi\model\dto\LoginRequest.class
 com\bank\bi\controller\PanelController.class
 com\bank\bi\config\HiAgentConfig.class
+com\bank\bi\model\entity\data\DataColumn$DataColumnBuilder.class
 com\bank\bi\model\entity\Role$RoleBuilder.class
 com\bank\bi\model\dto\HiAgentRequest$Message$MessageBuilder.class
 com\bank\bi\model\vo\UserInfoVO$UserInfoVOBuilder.class
+com\bank\bi\model\entity\data\DataTable$DataTableBuilder.class
 com\bank\bi\config\SecurityConfig.class
 com\bank\bi\controller\ManagementController.class
 com\bank\bi\model\dto\HiAgentResponse$Choice.class
@@ -45,6 +50,7 @@ com\bank\bi\model\dto\ChatResponse$ChatResponseBuilder.class
 com\bank\bi\model\vo\UserInfoVO.class
 com\bank\bi\repository\PanelItemRepository.class
 com\bank\bi\model\entity\PanelItem.class
+com\bank\bi\model\entity\data\DataTable.class
 com\bank\bi\repository\ConversationRepository.class
 com\bank\bi\service\ManagementService.class
 com\bank\bi\security\UserDetailsServiceImpl.class

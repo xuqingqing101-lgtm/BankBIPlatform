@@ -266,6 +266,53 @@ export async function analyzeData(query: string): Promise<ApiResponse> {
 }
 
 /**
+ * 上传数据文件
+ */
+export async function uploadData(file: File): Promise<ApiResponse> {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/data/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Upload error:', error);
+    throw error;
+  }
+}
+
+/**
+ * 获取所有数据表
+ */
+export async function getDataTables(): Promise<ApiResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/data/tables`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Get tables failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get tables error:', error);
+    throw error;
+  }
+}
+
+/**
  * 获取AI分析结果
  */
 export async function getAIAnalysis(category: string, query: string): Promise<ApiResponse> {
@@ -302,6 +349,8 @@ export const api = {
   askKnowledge,
   analyzeData,
   getAIAnalysis,
+  uploadData,
+  getDataTables,
 };
 
 export default api;
