@@ -7,9 +7,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
-import { Upload, FileSpreadsheet, Trash2, Plus, Save, Play, CheckCircle2, AlertCircle, RefreshCw, Database, Tag, BarChart2, Settings } from 'lucide-react';
+import { Upload, FileSpreadsheet, Trash2, Plus, Save, Play, CheckCircle2, AlertCircle, RefreshCw, Database, Tag, BarChart2, Settings, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { uploadData, getDataTables } from '../lib/api';
+import { uploadData, getDataTables, getTableColumns, updateColumn, cleanTable, getMetrics, createMetric, deleteMetric } from '../lib/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 
 interface TableData {
   id: string;
@@ -20,22 +28,49 @@ interface TableData {
   rows: number;
 }
 
-// 模拟的指标定义
-const initialMetrics = [
-  { id: 1, name: '存款余额', code: 'DEPOSIT_BAL', formula: 'sum(balance)', type: '原子指标' },
-  { id: 2, name: '存款日均', code: 'DEPOSIT_AVG', formula: 'sum(daily_balance)/days', type: '衍生指标' },
-];
+interface ColumnData {
+  id: number;
+  columnName: string;
+  displayName: string;
+  dataType: string;
+  columnRole: string;
+}
+
+interface MetricData {
+  id: number;
+  name: string;
+  code: string;
+  formula: string;
+  type: string;
+}
 
 export function DataManager() {
   const [activeTab, setActiveTab] = useState('import');
   const [tables, setTables] = useState<TableData[]>([]);
-  const [metrics, setMetrics] = useState(initialMetrics);
+  const [metrics, setMetrics] = useState<MetricData[]>([]);
   const [uploading, setUploading] = useState(false);
-  
+  const [cleaning, setCleaning] = useState<string | null>(null);
+
+  // Label Tab State
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [columns, setColumns] = useState<ColumnData[]>([]);
+  const [loadingColumns, setLoadingColumns] = useState(false);
+
+  // Metrics Tab State
+  const [isMetricDialogOpen, setIsMetricDialogOpen] = useState(false);
+  const [newMetric, setNewMetric] = useState({ name: '', code: '', formula: '', type: '原子指标' });
+
   // 加载数据表
   useEffect(() => {
     loadTables();
   }, []);
+
+  // 加载指标
+  useEffect(() => {
+    if (activeTab === 'metrics') {
+      loadMetrics();
+    }
+  }, [activeTab]);
 
   const loadTables = async () => {
     try {
@@ -50,9 +85,44 @@ export function DataManager() {
           rows: t.rowCount
         }));
         setTables(mappedTables);
+        if (mappedTables.length > 0 && !selectedTableId) {
+            setSelectedTableId(mappedTables[0].id);
+        }
       }
     } catch (error) {
       console.error('Failed to load tables', error);
+    }
+  };
+
+  const loadMetrics = async () => {
+    try {
+      const response = await getMetrics();
+      if (response.success) {
+        setMetrics(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load metrics', error);
+    }
+  }
+
+  // 加载列信息
+  useEffect(() => {
+    if (selectedTableId && activeTab === 'label') {
+      loadColumns(selectedTableId);
+    }
+  }, [selectedTableId, activeTab]);
+
+  const loadColumns = async (tableId: string) => {
+    setLoadingColumns(true);
+    try {
+      const response = await getTableColumns(tableId);
+      if (response.success) {
+        setColumns(response.data);
+      }
+    } catch (error) {
+      toast.error('加载列信息失败');
+    } finally {
+      setLoadingColumns(false);
     }
   };
   
@@ -77,19 +147,76 @@ export function DataManager() {
     }
   };
 
-  // 模拟清洗 (已废弃，后端自动处理)
-  const handleClean = (id: string) => {
-    toast.info('数据已由后端自动清洗');
+  // 处理清洗
+  const handleClean = async (id: string) => {
+    setCleaning(id);
+    try {
+      const response = await cleanTable(id);
+      if (response.success) {
+        toast.success('清洗完成', { description: response.data });
+      } else {
+        toast.error('清洗失败');
+      }
+    } catch (error) {
+      toast.error('清洗出错');
+    } finally {
+      setCleaning(null);
+    }
   };
 
-  // 模拟字段 (实际应从后端获取列信息)
-  const mockFields = [
-    { name: 'cust_id', type: 'VARCHAR', label: '客户号', category: '维度' },
-    { name: 'org_code', type: 'VARCHAR', label: '机构代码', category: '维度' },
-    { name: 'balance', type: 'DOUBLE', label: '余额', category: '指标' },
-    { name: 'open_date', type: 'DATE', label: '开户日期', category: '时间' },
-    { name: 'age', type: 'INT', label: '年龄', category: '维度' },
-  ];
+  // 处理列修改
+  const handleColumnChange = (index: number, field: keyof ColumnData, value: string) => {
+    const newColumns = [...columns];
+    newColumns[index] = { ...newColumns[index], [field]: value };
+    setColumns(newColumns);
+  };
+
+  // 保存列配置
+  const handleSaveColumns = async () => {
+    try {
+      // 串行更新，实际项目中应使用批量更新接口
+      for (const col of columns) {
+        await updateColumn(col.id, {
+          displayName: col.displayName,
+          role: col.columnRole,
+          dataType: col.dataType
+        });
+      }
+      toast.success('配置已保存');
+    } catch (error) {
+      toast.error('保存失败');
+    }
+  };
+
+  // 处理新增指标
+  const handleCreateMetric = async () => {
+    try {
+      const response = await createMetric(newMetric);
+      if (response.success) {
+        toast.success('指标创建成功');
+        setIsMetricDialogOpen(false);
+        loadMetrics();
+        setNewMetric({ name: '', code: '', formula: '', type: '原子指标' });
+      }
+    } catch (error) {
+      toast.error('创建失败');
+    }
+  };
+
+  // 处理删除指标
+  const handleDeleteMetric = async (id: number) => {
+      if (confirm('确定要删除这个指标吗？')) {
+        try {
+            const response = await deleteMetric(id);
+            if (response.success) {
+                toast.success('指标已删除');
+                loadMetrics();
+            }
+        } catch (error) {
+            toast.error('删除失败');
+        }
+      }
+  }
 
   return (
     <div className="space-y-6 p-6 pb-20">
@@ -99,13 +226,9 @@ export function DataManager() {
           <p className="text-slate-400 mt-1">一站式完成数据导入、清洗、建模与指标定义</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="border-slate-600 text-slate-300">
+          <Button variant="outline" className="border-slate-600 text-slate-300" onClick={loadTables}>
             <RefreshCw className="w-4 h-4 mr-2" />
-            同步元数据
-          </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Play className="w-4 h-4 mr-2" />
-            自动处理任务
+            刷新数据
           </Button>
         </div>
       </div>
@@ -213,98 +336,42 @@ export function DataManager() {
         <TabsContent value="clean" className="space-y-4">
           <Card className="bg-slate-800/50 border-slate-700">
             <CardHeader>
-              <CardTitle className="text-white">数据清洗规则配置</CardTitle>
-              <CardDescription className="text-slate-400">配置自动化清洗策略，提升数据质量</CardDescription>
+              <CardTitle className="text-white">数据清洗任务</CardTitle>
+              <CardDescription className="text-slate-400">对已上传的数据表执行清洗规则，提升数据质量</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="space-y-4 p-4 bg-slate-900/50 rounded-lg border border-slate-700">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-blue-400" />
-                    <h3 className="font-medium text-white">缺失值处理</h3>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-400 text-xs">数值型字段</Label>
-                    <select className="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white">
-                      <option>填充为 0</option>
-                      <option>填充为平均值</option>
-                      <option>丢弃该行</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-400 text-xs">文本型字段</Label>
-                    <select className="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white">
-                      <option>填充为 "未知"</option>
-                      <option>填充为空字符串</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-4 p-4 bg-slate-900/50 rounded-lg border border-slate-700">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-orange-400" />
-                    <h3 className="font-medium text-white">异常值检测</h3>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-400 text-xs">检测标准</Label>
-                    <select className="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white">
-                      <option>3倍标准差 (3-Sigma)</option>
-                      <option>箱线图 (IQR)</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2 mt-4">
-                    <input type="checkbox" className="rounded border-slate-600 bg-slate-800" id="auto-fix" />
-                    <Label htmlFor="auto-fix" className="text-slate-300 text-sm">自动修正异常值</Label>
-                  </div>
-                </div>
-
-                <div className="space-y-4 p-4 bg-slate-900/50 rounded-lg border border-slate-700">
-                  <div className="flex items-center gap-2">
-                    <Database className="w-5 h-5 text-purple-400" />
-                    <h3 className="font-medium text-white">数据格式化</h3>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-400 text-xs">日期格式</Label>
-                    <Input defaultValue="YYYY-MM-DD" className="bg-slate-800 border-slate-600 text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-400 text-xs">金额单位</Label>
-                    <select className="w-full bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white">
-                      <option>保持原样</option>
-                      <option>统一转换为"元"</option>
-                      <option>统一转换为"万元"</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
               <Table>
                 <TableHeader>
                   <TableRow className="border-slate-700 hover:bg-slate-700/50">
-                    <TableHead className="text-slate-300">待处理文件</TableHead>
+                    <TableHead className="text-slate-300">数据表</TableHead>
                     <TableHead className="text-slate-300">状态</TableHead>
-                    <TableHead className="text-slate-300">预估耗时</TableHead>
+                    <TableHead className="text-slate-300">上次处理时间</TableHead>
                     <TableHead className="text-right text-slate-300">操作</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tables.filter(t => t.status === '待处理').map(table => (
+                  {tables.map(table => (
                     <TableRow key={table.id} className="border-slate-700 hover:bg-slate-700/50">
                       <TableCell className="font-medium text-white">{table.name}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-yellow-400 border-yellow-500/30">待清洗</Badge></TableCell>
-                      <TableCell className="text-slate-400">约 30 秒</TableCell>
+                      <TableCell><Badge variant="outline" className="text-green-400 border-green-500/30">就绪</Badge></TableCell>
+                      <TableCell className="text-slate-400">{table.date}</TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" onClick={() => handleClean(table.id)} className="bg-blue-600 hover:bg-blue-700">
-                          执行清洗
+                        <Button 
+                            size="sm" 
+                            onClick={() => handleClean(table.id)} 
+                            className="bg-blue-600 hover:bg-blue-700"
+                            disabled={cleaning === table.id}
+                        >
+                          {cleaning === table.id ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                清洗中...
+                            </>
+                          ) : '重新清洗'}
                         </Button>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {tables.filter(t => t.status === '待处理').length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-slate-500 py-8">没有待清洗的数据</TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -322,9 +389,13 @@ export function DataManager() {
                 <CardContent>
                   <div className="space-y-2">
                     {tables.map(table => (
-                      <div key={table.id} className="p-3 rounded bg-slate-900/50 border border-slate-700 hover:border-blue-500 cursor-pointer flex items-center gap-2">
-                        <Database className="w-4 h-4 text-blue-400" />
-                        <span className="text-sm text-slate-200 truncate">{table.name}</span>
+                      <div 
+                        key={table.id} 
+                        className={`p-3 rounded border cursor-pointer flex items-center gap-2 transition-colors ${selectedTableId === table.id ? 'bg-blue-600/20 border-blue-500' : 'bg-slate-900/50 border-slate-700 hover:border-blue-500'}`}
+                        onClick={() => setSelectedTableId(table.id)}
+                      >
+                        <Database className={`w-4 h-4 ${selectedTableId === table.id ? 'text-blue-400' : 'text-slate-400'}`} />
+                        <span className={`text-sm truncate ${selectedTableId === table.id ? 'text-white' : 'text-slate-200'}`}>{table.name}</span>
                       </div>
                     ))}
                   </div>
@@ -338,48 +409,72 @@ export function DataManager() {
                   <CardDescription className="text-slate-400">为字段添加业务含义，帮助AI更准确地理解数据</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-slate-700 hover:bg-slate-700/50">
-                        <TableHead className="text-slate-300">字段名</TableHead>
-                        <TableHead className="text-slate-300">数据类型</TableHead>
-                        <TableHead className="text-slate-300">业务标签 (Label)</TableHead>
-                        <TableHead className="text-slate-300">字段分类</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {mockFields.map((field, i) => (
-                        <TableRow key={i} className="border-slate-700 hover:bg-slate-700/50">
-                          <TableCell className="font-mono text-slate-300">{field.name}</TableCell>
-                          <TableCell>
-                            <select defaultValue={field.type} className="h-8 bg-slate-800 border border-slate-600 rounded text-sm text-white px-2 cursor-pointer hover:bg-slate-700 focus:ring-2 focus:ring-blue-500/50 outline-none transition-colors">
-                              <option value="VARCHAR" className="bg-slate-800">VARCHAR (文本)</option>
-                              <option value="INT" className="bg-slate-800">INT (整数)</option>
-                              <option value="DOUBLE" className="bg-slate-800">DOUBLE (小数)</option>
-                              <option value="DATE" className="bg-slate-800">DATE (日期)</option>
-                            </select>
-                          </TableCell>
-                          <TableCell>
-                            <Input defaultValue={field.label} className="h-8 bg-slate-900 border-slate-600 text-white" />
-                          </TableCell>
-                          <TableCell>
-                            <select defaultValue={field.category} className="h-8 bg-slate-800 border border-slate-600 rounded text-sm text-white px-2 cursor-pointer hover:bg-slate-700 focus:ring-2 focus:ring-blue-500/50 outline-none transition-colors">
-                              <option className="bg-slate-800">维度</option>
-                              <option className="bg-slate-800">指标</option>
-                              <option className="bg-slate-800">时间</option>
-                              <option className="bg-slate-800">其他</option>
-                            </select>
-                          </TableCell>
+                  {loadingColumns ? (
+                      <div className="flex justify-center py-10">
+                          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                      </div>
+                  ) : (
+                    <>
+                    <Table>
+                        <TableHeader>
+                        <TableRow className="border-slate-700 hover:bg-slate-700/50">
+                            <TableHead className="text-slate-300">字段名</TableHead>
+                            <TableHead className="text-slate-300">数据类型</TableHead>
+                            <TableHead className="text-slate-300">业务标签 (Label)</TableHead>
+                            <TableHead className="text-slate-300">字段分类</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  <div className="mt-4 flex justify-end">
-                    <Button className="bg-green-600 hover:bg-green-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      保存配置
-                    </Button>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                        {columns.map((col, i) => (
+                            <TableRow key={col.id} className="border-slate-700 hover:bg-slate-700/50">
+                            <TableCell className="font-mono text-slate-300">{col.columnName}</TableCell>
+                            <TableCell>
+                                <select 
+                                    value={col.dataType} 
+                                    onChange={(e) => handleColumnChange(i, 'dataType', e.target.value)}
+                                    className="h-8 bg-slate-800 border border-slate-600 rounded text-sm text-white px-2 cursor-pointer hover:bg-slate-700 focus:ring-2 focus:ring-blue-500/50 outline-none transition-colors"
+                                >
+                                <option value="VARCHAR">VARCHAR (文本)</option>
+                                <option value="INT">INT (整数)</option>
+                                <option value="DOUBLE">DOUBLE (小数)</option>
+                                <option value="DATE">DATE (日期)</option>
+                                </select>
+                            </TableCell>
+                            <TableCell>
+                                <Input 
+                                    value={col.displayName || ''} 
+                                    onChange={(e) => handleColumnChange(i, 'displayName', e.target.value)}
+                                    className="h-8 bg-slate-900 border-slate-600 text-white" 
+                                />
+                            </TableCell>
+                            <TableCell>
+                                <select 
+                                    value={col.columnRole} 
+                                    onChange={(e) => handleColumnChange(i, 'columnRole', e.target.value)}
+                                    className="h-8 bg-slate-800 border border-slate-600 rounded text-sm text-white px-2 cursor-pointer hover:bg-slate-700 focus:ring-2 focus:ring-blue-500/50 outline-none transition-colors"
+                                >
+                                <option value="DIMENSION">维度</option>
+                                <option value="METRIC">指标</option>
+                                <option value="TIME">时间</option>
+                                </select>
+                            </TableCell>
+                            </TableRow>
+                        ))}
+                        {columns.length === 0 && (
+                             <TableRow>
+                                <TableCell colSpan={4} className="text-center text-slate-500 py-8">请选择左侧数据表以加载字段</TableCell>
+                             </TableRow>
+                        )}
+                        </TableBody>
+                    </Table>
+                    <div className="mt-4 flex justify-end">
+                        <Button className="bg-green-600 hover:bg-green-700" onClick={handleSaveColumns} disabled={columns.length === 0}>
+                        <Save className="w-4 h-4 mr-2" />
+                        保存配置
+                        </Button>
+                    </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -394,10 +489,49 @@ export function DataManager() {
                 <CardTitle className="text-white">业务指标定义</CardTitle>
                 <CardDescription className="text-slate-400">定义原子指标和衍生指标，构建统一的指标体系</CardDescription>
               </div>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                新增指标
+              <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsMetricDialogOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  新增指标
               </Button>
+              <Dialog open={isMetricDialogOpen} onOpenChange={setIsMetricDialogOpen}>
+                <DialogContent className="bg-slate-800 border-slate-700 text-white">
+                    <DialogHeader>
+                        <DialogTitle>新增业务指标</DialogTitle>
+                        <DialogDescription>
+                            添加新的业务指标定义，以便在智能问数中引用。
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="name" className="text-right">指标名称</Label>
+                            <Input id="name" value={newMetric.name} onChange={(e) => setNewMetric({...newMetric, name: e.target.value})} className="col-span-3 bg-slate-900 border-slate-600" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="code" className="text-right">指标代码</Label>
+                            <Input id="code" value={newMetric.code} onChange={(e) => setNewMetric({...newMetric, code: e.target.value})} className="col-span-3 bg-slate-900 border-slate-600" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="formula" className="text-right">计算公式</Label>
+                            <Input id="formula" value={newMetric.formula} onChange={(e) => setNewMetric({...newMetric, formula: e.target.value})} className="col-span-3 bg-slate-900 border-slate-600" placeholder="e.g. sum(balance)" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="type" className="text-right">指标类型</Label>
+                            <select 
+                                id="type" 
+                                value={newMetric.type} 
+                                onChange={(e) => setNewMetric({...newMetric, type: e.target.value})} 
+                                className="col-span-3 h-10 bg-slate-900 border border-slate-600 rounded-md px-3 text-sm"
+                            >
+                                <option value="原子指标">原子指标</option>
+                                <option value="衍生指标">衍生指标</option>
+                            </select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit" onClick={handleCreateMetric}>保存指标</Button>
+                    </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               <Table>
@@ -424,12 +558,17 @@ export function DataManager() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white">
-                          <Settings className="w-4 h-4" />
+                        <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white" onClick={() => handleDeleteMetric(metric.id)}>
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
                   ))}
+                  {metrics.length === 0 && (
+                     <TableRow>
+                        <TableCell colSpan={5} className="text-center text-slate-500 py-8">暂无指标定义</TableCell>
+                     </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

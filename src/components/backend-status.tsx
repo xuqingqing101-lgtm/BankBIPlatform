@@ -24,7 +24,8 @@ export function BackendStatus() {
       }
     };
     
-    checkStatus();
+    // 首次不立即检查，给后端一点启动时间
+    // checkStatus();
     
     // 每30秒检查一次
     const interval = setInterval(checkStatus, 30000);

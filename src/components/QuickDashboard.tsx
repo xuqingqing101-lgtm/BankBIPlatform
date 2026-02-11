@@ -12,11 +12,13 @@ import {
   Clock,
   BarChart3,
   CreditCard,
-  Building2
+  Building2,
+  Shield,
+  FileText
 } from 'lucide-react';
 
 interface DashboardProps {
-  type: 'dashboard' | 'deposit' | 'loan' | 'intermediate' | 'customer';
+  type: 'dashboard' | 'deposit' | 'loan' | 'intermediate' | 'customer' | 'executive' | 'finance' | 'trade' | 'logistics';
 }
 
 export function QuickDashboard({ type }: DashboardProps) {
@@ -222,6 +224,202 @@ export function QuickDashboard({ type }: DashboardProps) {
             <div>
               <p className="text-xs text-blue-400 mb-1">数字化建议</p>
               <p className="text-xs text-slate-300">手机银行渗透率48%，建议加大APP推广力度提升至60%</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (type === 'finance') {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">授信总额</p>
+              <CreditCard className="w-4 h-4 text-blue-400" />
+            </div>
+            <p className="text-white text-xl">¥8.5万亿</p>
+             <div className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-green-400" />
+              <span className="text-xs text-green-400">+5.2%</span>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">已用额度</p>
+              <DollarSign className="w-4 h-4 text-green-400" />
+            </div>
+            <p className="text-white text-xl">¥5.2万亿</p>
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-green-400" />
+              <span className="text-xs text-green-400">+3.8%</span>
+            </div>
+          </Card>
+
+           <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">普惠金融</p>
+              <Users className="w-4 h-4 text-purple-400" />
+            </div>
+            <p className="text-white text-xl">¥1.2万亿</p>
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-green-400" />
+              <span className="text-xs text-green-400">+12.5%</span>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">绿色信贷</p>
+              <Package className="w-4 h-4 text-orange-400" />
+            </div>
+            <p className="text-white text-xl">¥0.8万亿</p>
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-green-400" />
+              <span className="text-xs text-green-400">+15.2%</span>
+            </div>
+          </Card>
+        </div>
+
+        <Card className="p-3 bg-blue-500/10 border-blue-500/20">
+          <div className="flex items-start gap-2">
+            <BarChart3 className="w-4 h-4 text-blue-400 mt-0.5" />
+            <div>
+              <p className="text-xs text-blue-400 mb-1">信贷结构优化</p>
+              <p className="text-xs text-slate-300">绿色信贷和普惠金融增速显著高于平均水平，信贷结构持续优化</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (type === 'trade') {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">理财规模</p>
+              <Wallet className="w-4 h-4 text-blue-400" />
+            </div>
+            <p className="text-white text-xl">¥2.1万亿</p>
+             <div className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-green-400" />
+              <span className="text-xs text-green-400">+4.5%</span>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">代销基金</p>
+              <DollarSign className="w-4 h-4 text-purple-400" />
+            </div>
+            <p className="text-white text-xl">¥8500亿</p>
+            <div className="flex items-center gap-1">
+              <TrendingDown className="w-3 h-3 text-red-400" />
+              <span className="text-xs text-red-400">-2.1%</span>
+            </div>
+          </Card>
+
+           <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">贵金属交易</p>
+              <Package className="w-4 h-4 text-yellow-400" />
+            </div>
+            <p className="text-white text-xl">¥320亿</p>
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-green-400" />
+              <span className="text-xs text-green-400">+8.9%</span>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">托管资产</p>
+              <Building2 className="w-4 h-4 text-green-400" />
+            </div>
+            <p className="text-white text-xl">¥12.5万亿</p>
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-green-400" />
+              <span className="text-xs text-green-400">+6.2%</span>
+            </div>
+          </Card>
+        </div>
+
+        <Card className="p-3 bg-purple-500/10 border-purple-500/20">
+          <div className="flex items-start gap-2">
+            <BarChart3 className="w-4 h-4 text-purple-400 mt-0.5" />
+            <div>
+              <p className="text-xs text-purple-400 mb-1">财富管理建议</p>
+              <p className="text-xs text-slate-300">基金销售受市场波动影响下滑，建议加大低风险理财产品营销</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (type === 'logistics') {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">合规风险事件</p>
+              <AlertTriangle className="w-4 h-4 text-red-400" />
+            </div>
+            <p className="text-white text-xl">0</p>
+             <div className="flex items-center gap-1">
+              <CheckCircle className="w-3 h-3 text-green-400" />
+              <span className="text-xs text-green-400">运行平稳</span>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">反洗钱预警</p>
+              <Shield className="w-4 h-4 text-orange-400" />
+            </div>
+            <p className="text-white text-xl">12</p>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-slate-400">待处理: 5</span>
+            </div>
+          </Card>
+
+           <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">系统可用率</p>
+              <Clock className="w-4 h-4 text-blue-400" />
+            </div>
+            <p className="text-white text-xl">99.99%</p>
+            <div className="flex items-center gap-1">
+              <CheckCircle className="w-3 h-3 text-green-400" />
+              <span className="text-xs text-green-400">达标</span>
+            </div>
+          </Card>
+
+          <Card className="p-4 bg-slate-800/50 border-slate-700/50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-slate-400">监管报送</p>
+              <FileText className="w-4 h-4 text-purple-400" />
+            </div>
+            <p className="text-white text-xl">100%</p>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-slate-400">无逾期</span>
+            </div>
+          </Card>
+        </div>
+
+        <Card className="p-3 bg-green-500/10 border-green-500/20">
+          <div className="flex items-start gap-2">
+            <CheckCircle className="w-4 h-4 text-green-400 mt-0.5" />
+            <div>
+              <p className="text-xs text-green-400 mb-1">合规态势</p>
+              <p className="text-xs text-slate-300">本月未发生重大合规风险事件，反洗钱系统运行正常</p>
             </div>
           </div>
         </Card>

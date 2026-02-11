@@ -143,8 +143,7 @@ public class DataManagementService {
         for (Map<String, Object> colDef : schema) {
             String colName = (String) colDef.get("name");
             String type = (String) colDef.get("type");
-            String safeName = colName.replaceAll("[^a-zA-Z0-9_]", "_");
-            if (safeName.matches("^\\d.*")) safeName = "col_" + safeName;
+            String safeName = sanitizeColumnName(colName);
             
             String dbType = "VARCHAR(1000)";
             if ("INT".equals(type)) dbType = "INT";
@@ -286,6 +285,31 @@ public class DataManagementService {
         return true;
     }
 
+    private String sanitizeColumnName(String name) {
+        if (name == null) return "col_unknown";
+        String safeName = name.trim().replaceAll("[^a-zA-Z0-9_]", "_");
+        
+        if (safeName.matches("^\\d.*")) {
+            safeName = "col_" + safeName;
+        }
+        
+        // Common SQL reserved words
+        java.util.List<String> keywords = java.util.Arrays.asList(
+            "ID", "SELECT", "DELETE", "UPDATE", "INSERT", "FROM", "WHERE", "ORDER", "GROUP", "BY", 
+            "HAVING", "LIMIT", "OFFSET", "USER", "TABLE", "KEY", "VALUE", "YEAR", "MONTH", "DAY", 
+            "DATE", "TIME", "TIMESTAMP", "ROW", "RANK", "CAST", "CASE", "WHEN", "THEN", "ELSE", "END",
+            "FUNCTION", "PROCEDURE", "TRIGGER", "VIEW", "INDEX", "CONSTRAINT", "PRIMARY", "FOREIGN",
+            "CHECK", "DEFAULT", "NULL", "TRUE", "FALSE", "BOOLEAN", "INT", "INTEGER", "DOUBLE", "FLOAT",
+            "CHAR", "VARCHAR", "TEXT", "CLOB", "BLOB", "BINARY", "VARBINARY"
+        );
+        
+        if (keywords.contains(safeName.toUpperCase())) {
+            safeName = safeName + "_col";
+        }
+        
+        return safeName;
+    }
+
     private DataTable processCsvData(CsvData data, String tableName, Long userId) {
         List<CsvRow> rows = data.getRows();
 
@@ -344,14 +368,7 @@ public class DataManagementService {
         
         for (int i = 0; i < colCount; i++) {
             String header = headers.get(i);
-            String safeColumnName = header.replaceAll("[^a-zA-Z0-9_]", "_");
-            if (safeColumnName.matches("^\\d.*")) {
-                safeColumnName = "col_" + safeColumnName;
-            }
-            // 避免与主键 id 冲突
-            if (safeColumnName.equalsIgnoreCase("id")) {
-                safeColumnName = "original_id";
-            }
+            String safeColumnName = sanitizeColumnName(header);
             
             // 确定最终类型
             String dataType = "VARCHAR(1000)";
@@ -429,6 +446,28 @@ public class DataManagementService {
      */
     public List<DataTable> getAllTables() {
         return dataTableRepository.findAll();
+    }
+
+    /**
+     * 获取表的所有列
+     */
+    public List<DataColumn> getTableColumns(Long tableId) {
+        return dataColumnRepository.findByDataTableId(tableId);
+    }
+
+    /**
+     * 更新列元数据
+     */
+    @Transactional
+    public DataColumn updateColumn(Long columnId, String displayName, String role, String dataType) {
+        DataColumn column = dataColumnRepository.findById(columnId)
+                .orElseThrow(() -> new RuntimeException("列不存在"));
+        
+        if (displayName != null) column.setDisplayName(displayName);
+        if (role != null) column.setColumnRole(role);
+        if (dataType != null) column.setDataType(dataType);
+        
+        return dataColumnRepository.save(column);
     }
 
     /**

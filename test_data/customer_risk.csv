@@ -1,0 +1,15 @@
+customer_id,customer_name,type,industry,total_assets_million,risk_level,credit_score,last_audit_date
+C1001,Alpha Tech Corp,Corporate,Technology,150.0,Low,AAA,2023-12-01
+C1002,Beta Logistics,Corporate,Logistics,80.0,Medium,AA,2023-11-15
+C1003,Gamma Construction,Corporate,Real Estate,2000.0,Medium,AA-,2023-10-20
+C1004,Delta Retail,Corporate,Retail,5.0,High,C,2023-09-05
+C1005,Epsilon Mfg,Corporate,Manufacturing,300.0,Low,AAA,2023-12-10
+C1006,Zeta Trading,Corporate,Trade,10.0,High,D,2023-08-30
+C2001,Zhang San,Retail,N/A,8.5,Low,780,2024-01-05
+C2002,Li Si,Retail,N/A,1.2,Medium,650,2024-01-10
+C2003,Wang Wu,Retail,N/A,0.5,High,580,2023-12-25
+C2004,Zhao Liu,Retail,N/A,12.0,Low,800,2024-01-15
+C2005,Sun Qi,Retail,N/A,3.0,Medium,690,2024-01-02
+C2006,Zhou Ba,Retail,N/A,0.2,High,550,2023-12-20
+C3001,High Net Individual A,Retail,N/A,50.0,Low,820,2024-01-20
+C3002,High Net Individual B,Retail,N/A,6.5,Low,790,2024-01-22

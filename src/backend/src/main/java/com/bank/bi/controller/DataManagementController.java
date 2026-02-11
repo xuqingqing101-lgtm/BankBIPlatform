@@ -25,15 +25,28 @@ public class DataManagementController {
     @PostMapping("/upload")
     public ResponseUtil.Result<DataTable> uploadData(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("tableName") String tableName,
+            @RequestParam(value = "tableName", required = false) String tableName,
             HttpServletRequest request) {
         if (file.isEmpty()) {
             return ResponseUtil.error("文件不能为空");
         }
         try {
             Long userId = getUserId(request);
+            
+            String finalTableName = tableName;
+            if (finalTableName == null || finalTableName.trim().isEmpty()) {
+                finalTableName = file.getOriginalFilename();
+                if (finalTableName != null && finalTableName.lastIndexOf('.') > 0) {
+                    finalTableName = finalTableName.substring(0, finalTableName.lastIndexOf('.'));
+                }
+                // Fallback if filename is still null or empty
+                if (finalTableName == null || finalTableName.trim().isEmpty()) {
+                    finalTableName = "Uploaded_Data_" + System.currentTimeMillis();
+                }
+            }
+            
             // 兼容旧接口，仍然保留自动上传
-            return ResponseUtil.success(dataManagementService.uploadData(file, tableName, userId));
+            return ResponseUtil.success(dataManagementService.uploadData(file, finalTableName, userId));
         } catch (Exception e) {
             log.error("上传失败", e);
             return ResponseUtil.error("上传失败: " + e.getMessage());
@@ -84,6 +97,43 @@ public class DataManagementController {
     public ResponseUtil.Result<List<DataTable>> getTables(HttpServletRequest request) {
         Long userId = getUserId(request);
         return ResponseUtil.success(dataManagementService.getUserTables(userId));
+    }
+
+    /**
+     * 获取表的列信息
+     */
+    @GetMapping("/tables/{tableId}/columns")
+    public ResponseUtil.Result<List<com.bank.bi.model.entity.data.DataColumn>> getTableColumns(@PathVariable Long tableId) {
+        return ResponseUtil.success(dataManagementService.getTableColumns(tableId));
+    }
+
+    /**
+     * 更新列信息
+     */
+    @PutMapping("/columns/{columnId}")
+    public ResponseUtil.Result<com.bank.bi.model.entity.data.DataColumn> updateColumn(
+            @PathVariable Long columnId,
+            @RequestBody java.util.Map<String, String> body) {
+        return ResponseUtil.success(dataManagementService.updateColumn(
+                columnId,
+                body.get("displayName"),
+                body.get("role"),
+                body.get("dataType")
+        ));
+    }
+    
+    /**
+     * 触发数据清洗 (模拟)
+     */
+    @PostMapping("/clean/{tableId}")
+    public ResponseUtil.Result<String> cleanTable(@PathVariable Long tableId) {
+        // 实际逻辑中可能会调用异步任务清洗数据
+        try {
+            Thread.sleep(1000); // 模拟耗时
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return ResponseUtil.success("清洗任务已提交并自动完成");
     }
 
     private Long getUserId(HttpServletRequest request) {

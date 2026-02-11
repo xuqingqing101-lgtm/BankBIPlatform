@@ -1,0 +1,7 @@
+event_id,date,type,severity,customer_id,description,status,handler
+E001,2024-02-01,AML,High,C1006,Suspicious large transaction (50M CNY) to overseas account,Open,Unassigned
+E002,2024-02-02,Compliance,Medium,C1004,Loan usage mismatch with contract purpose,Investigating,Officer_A
+E003,2024-02-03,Risk,High,C2003,Credit card overdue > 90 days,Open,Collection_Team
+E004,2024-02-05,AML,Medium,C2006,Multiple small transactions summing to large amount,Closed,System_Auto
+E005,2024-02-08,Compliance,Low,C1002,Document expiration warning (Business License),Notified,Officer_B
+E006,2024-02-10,AML,High,C9999,Unknown entity large cash deposit (2M CNY),Open,Unassigned

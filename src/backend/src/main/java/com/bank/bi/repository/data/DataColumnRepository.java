@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DataColumnRepository extends JpaRepository<DataColumn, Long> {
+    java.util.List<DataColumn> findByDataTableId(Long tableId);
 }

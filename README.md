@@ -7,6 +7,7 @@
 
 ### 2.1 智能问数 (Text-to-SQL)
 - **自然语言查询**: 支持如 "查询北京分行去年的存款总额"、"统计各分行不良贷款率" 等复杂业务问题。
+- **智能可视化**: AI 根据数据结构自动推荐 **折线图 (Line)**、**柱状图 (Bar)** 或 **表格 (Table)**，实现 "数据即图表"。
 - **安全可控机制**: 
   - **JSON 中间层**: AI 不直接生成 SQL，而是输出结构化 JSON 参数，由后端 `SafeQueryBuilder` 构建 SQL，杜绝注入风险。
   - **白名单校验**: 严格限制表名、列名和操作符。
@@ -22,10 +23,12 @@
 ### 2.3 仪表盘 (Pin)
 - **个性化看板**: 支持创建 "个人看板" 和 "团队看板"。
 - **一键固定**: 将 AI 分析生成的图表或数据表格 "Pin" 到指定看板，形成固定的日报/周报视图。
+- **业务全景**: 首页预置 **风险**、**信贷**、**资产**、**合规** 四大业务板块的实时数据概览。
 
 ### 2.4 数据管理
 - **自动预置**: 系统启动时自动扫描 `preload/data` (CSV) 和 `preload/knowledge` (文档) 目录，实现开箱即用。
 - **动态建模**: 上传 CSV 文件后，系统自动推断列类型 (Int/Double/Date/String) 并创建数据库表。
+- **智能映射**: 自动处理 CSV 表头中的特殊字符和保留关键字 (如 `year` -> `year_col`)，防止 SQL 语法错误。
 - **元数据管理**: 自动维护表结构和业务字段描述，辅助 AI 理解数据。
 
 ### 2.5 安全合规
@@ -37,6 +40,7 @@
 - **数据库**: H2 Database (嵌入式，可配置为 MySQL/Oracle)
 - **AI 引擎**: 集成大模型 API，支持 Function Calling 和 Context Learning
 - **文档处理**: Apache Tika, PDFBox
+- **前端**: React, Tailwind CSS, Recharts
 - **安全**: Spring Security, JWT Token
 
 ## 4. 快速开始
@@ -44,6 +48,7 @@
 ### 4.1 环境要求
 - JDK 17 或更高版本
 - Maven 3.6+
+- Node.js 18+ (可选，仅前端开发需要)
 
 ### 4.2 启动步骤
 1. 进入后端目录:
@@ -66,18 +71,19 @@
 
 **演示数据预置**:
 系统已自动加载以下 5 大核心业务数据表：
-- `operation_metrics` (经营指标)
-- `deposit_data` (存款数据)
-- `loan_data` (贷款数据)
-- `intermediate_business` (中间业务)
-- `customer_profile` (客户画像)
+- `financial_summary` (月度财务报表)
+- `loan_portfolio` (贷款明细)
+- `customer_risk` (客户画像)
+- `corporate_credit` (企业授信)
+- `compliance_events` (合规事件)
 
 ### 4.4 典型提问示例
 您可以尝试问 AI 以下问题：
 1. **经营分析**: "2023年全行营业收入是多少？与去年相比如何？"
 2. **存款业务**: "统计各分行的存款余额排名，并用柱状图展示。"
-3. **风险管理**: "查询不良贷款率最高的 3 个行业。"
+3. **风险管理**: "本月不良贷款率是多少？有哪些高风险客户？"
 4. **客户营销**: "列出资产超过 500 万且风险等级为 Low 的客户名单。"
+5. **合规监控**: "最近有哪些可疑的大额交易需要关注？"
 
 ## 5. 目录结构说明
 ```
@@ -85,13 +91,16 @@ AIboard/
 ├── preload/                # 预置数据目录
 │   ├── data/               # CSV 数据文件 (自动建表)
 │   └── knowledge/          # 知识库文档 (自动入库)
+├── test_data/              # 测试数据集 (包含全套业务模拟数据)
 ├── src/
 │   ├── backend/            # Java Spring Boot 后端
 │   │   ├── src/main/java/com/bank/bi/
 │   │   │   ├── service/    # 核心业务逻辑 (HiAgentService, KnowledgeService)
 │   │   │   ├── util/       # 工具类 (SafeQueryBuilder, DataMaskingUtil)
 │   │   │   └── ...
-│   └── frontend/           # (可选) 前端工程
+│   └── frontend/           # React 前端工程
+│       ├── components/     # UI 组件 (ChatInterface, QuickDashboard)
+│       └── lib/            # 工具库
 └── README.md               # 项目说明文档
 ```
 

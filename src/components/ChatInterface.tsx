@@ -70,14 +70,46 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
     setInput('');
     setIsLoading(true);
 
-    // 模拟AI响应
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(currentQuery);
-      // 保存对应的问题
-      aiResponse.query = currentQuery;
-      setMessages(prev => [...prev, aiResponse]);
+    try {
+      const response = await fetch('/api/ai/analyze-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: currentQuery })
+      });
+
+      const res = await response.json();
+
+      if (res.code === 200) {
+        const aiMessage: Message = {
+          id: messages.length + 2,
+          type: 'assistant',
+          content: res.data.response,
+          timestamp: new Date(),
+          query: currentQuery,
+          visualization: res.data.visualization,
+        };
+        setMessages(prev => [...prev, aiMessage]);
+      } else {
+        toast.error(res.message || '请求失败');
+        setMessages(prev => [...prev, {
+          id: Date.now(),
+          type: 'assistant',
+          content: '抱歉，分析过程中遇到问题：' + (res.message || '未知错误'),
+          timestamp: new Date()
+        }]);
+      }
+    } catch (error) {
+      console.error('AI Request Error:', error);
+      toast.error('网络连接失败');
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        type: 'assistant',
+        content: '抱歉，网络连接失败，请检查您的网络设置。',
+        timestamp: new Date()
+      }]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handlePinMessage = (message: Message) => {
@@ -94,62 +126,62 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <div className="flex-1 flex flex-col min-h-0 bg-slate-900/50">
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6" ref={scrollRef}>
-        <div className="max-w-5xl mx-auto space-y-4 md:space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth" ref={scrollRef}>
+        <div className="max-w-5xl mx-auto space-y-6">
           {messages.length === 1 && (
-            <div className="mb-6 md:mb-8 space-y-4 md:space-y-6">
+            <div className="mb-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {/* Quick Dashboard */}
-              <Card className="p-4 md:p-5 bg-slate-800/30 border-slate-700/50">
-                <div className="flex items-center gap-2 mb-3 md:mb-4">
-                  <PanelTopOpen className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
-                  <h3 className="text-white text-sm md:text-base">实时数据概览</h3>
+              <Card className="p-5 bg-slate-800/40 border-slate-700/50 backdrop-blur-sm shadow-xl">
+                <div className="flex items-center gap-2 mb-4">
+                  <PanelTopOpen className="w-5 h-5 text-blue-400" />
+                  <h3 className="text-white text-base font-medium">实时数据概览</h3>
                 </div>
                 <Tabs defaultValue="executive" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 bg-slate-700/30">
-                    <TabsTrigger value="executive" className="text-xs text-slate-300 data-[state=active]:bg-slate-600/50 data-[state=active]:text-white">风险</TabsTrigger>
-                    <TabsTrigger value="finance" className="text-xs text-slate-300 data-[state=active]:bg-slate-600/50 data-[state=active]:text-white">信贷</TabsTrigger>
-                    <TabsTrigger value="trade" className="text-xs text-slate-300 data-[state=active]:bg-slate-600/50 data-[state=active]:text-white">资产</TabsTrigger>
-                    <TabsTrigger value="logistics" className="text-xs text-slate-300 data-[state=active]:bg-slate-600/50 data-[state=active]:text-white">合规</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-4 bg-slate-700/30 p-1 rounded-lg">
+                    <TabsTrigger value="executive" className="text-xs text-slate-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-md transition-all">风险</TabsTrigger>
+                    <TabsTrigger value="finance" className="text-xs text-slate-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-md transition-all">信贷</TabsTrigger>
+                    <TabsTrigger value="trade" className="text-xs text-slate-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-md transition-all">资产</TabsTrigger>
+                    <TabsTrigger value="logistics" className="text-xs text-slate-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-md transition-all">合规</TabsTrigger>
                   </TabsList>
-                  <div className="mt-3 md:mt-4 space-y-3">
-                    <TabsContent value="executive" className="m-0">
+                  <div className="mt-4 space-y-3">
+                    <TabsContent value="executive" className="m-0 focus-visible:ring-0">
                       <QuickDashboard type="executive" />
                       <Button 
-                        variant="outline" 
-                        className="w-full mt-3 bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-600/50 hover:text-white text-sm"
-                        onClick={() => onNavigate?.('executive')}
+                        variant="ghost" 
+                        className="w-full mt-3 bg-slate-700/20 border border-slate-600/50 text-slate-300 hover:bg-blue-600/20 hover:text-blue-200 hover:border-blue-500/50 text-sm transition-all"
+                        onClick={() => onNavigate?.('dashboard')}
                       >
                         查看详细分析 →
                       </Button>
                     </TabsContent>
-                    <TabsContent value="finance" className="m-0">
+                    <TabsContent value="finance" className="m-0 focus-visible:ring-0">
                       <QuickDashboard type="finance" />
                       <Button 
-                        variant="outline" 
-                        className="w-full mt-3 bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-600/50 hover:text-white text-sm"
-                        onClick={() => onNavigate?.('finance')}
+                        variant="ghost" 
+                        className="w-full mt-3 bg-slate-700/20 border border-slate-600/50 text-slate-300 hover:bg-blue-600/20 hover:text-blue-200 hover:border-blue-500/50 text-sm transition-all"
+                        onClick={() => onNavigate?.('deposit')}
                       >
                         查看详细分析 →
                       </Button>
                     </TabsContent>
-                    <TabsContent value="trade" className="m-0">
+                    <TabsContent value="trade" className="m-0 focus-visible:ring-0">
                       <QuickDashboard type="trade" />
                       <Button 
-                        variant="outline" 
-                        className="w-full mt-3 bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-600/50 hover:text-white text-sm"
-                        onClick={() => onNavigate?.('trade')}
+                        variant="ghost" 
+                        className="w-full mt-3 bg-slate-700/20 border border-slate-600/50 text-slate-300 hover:bg-blue-600/20 hover:text-blue-200 hover:border-blue-500/50 text-sm transition-all"
+                        onClick={() => onNavigate?.('intermediate')}
                       >
                         查看详细分析 →
                       </Button>
                     </TabsContent>
-                    <TabsContent value="logistics" className="m-0">
+                    <TabsContent value="logistics" className="m-0 focus-visible:ring-0">
                       <QuickDashboard type="logistics" />
                       <Button 
-                        variant="outline" 
-                        className="w-full mt-3 bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-600/50 hover:text-white text-sm"
-                        onClick={() => onNavigate?.('logistics')}
+                        variant="ghost" 
+                        className="w-full mt-3 bg-slate-700/20 border border-slate-600/50 text-slate-300 hover:bg-blue-600/20 hover:text-blue-200 hover:border-blue-500/50 text-sm transition-all"
+                        onClick={() => onNavigate?.('dashboard')}
                       >
                         查看详细分析 →
                       </Button>
@@ -160,23 +192,26 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
 
               {/* Suggested Questions */}
               <div>
-                <p className="text-slate-400 mb-3 md:mb-4 text-sm">💬 或者试试问我这些问题：</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+                <p className="text-slate-400 mb-4 text-sm font-medium flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  智能推荐提问
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {suggestedQuestions.map((question, index) => (
                     <Card
                       key={index}
-                      className="p-3 md:p-4 bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/50 hover:border-blue-500/50 cursor-pointer transition-all group"
+                      className="p-4 bg-slate-800/40 border-slate-700/50 hover:bg-slate-700/60 hover:border-blue-500/30 cursor-pointer transition-all group backdrop-blur-sm shadow-sm hover:shadow-md"
                       onClick={() => handleSuggestedQuestion(question.text)}
                     >
-                      <div className="flex items-start gap-2 md:gap-3">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/20 transition-colors">
-                          <question.icon className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/20 transition-colors border border-blue-500/10 group-hover:border-blue-500/20">
+                          <question.icon className="w-5 h-5 text-blue-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <Badge variant="outline" className="text-xs border-slate-600 text-slate-400 mb-1.5 md:mb-2">
+                          <Badge variant="outline" className="text-xs border-slate-600/50 text-slate-400 mb-2 bg-slate-800/50">
                             {question.category}
                           </Badge>
-                          <p className="text-xs md:text-sm text-slate-300 group-hover:text-white transition-colors break-words">{question.text}</p>
+                          <p className="text-sm text-slate-300 group-hover:text-white transition-colors break-words leading-relaxed">{question.text}</p>
                         </div>
                       </div>
                     </Card>
@@ -189,45 +224,54 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
             >
               {message.type === 'assistant' && (
-                <div className="flex items-start gap-3 max-w-3xl">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+                <div className="flex items-start gap-4 max-w-4xl w-full">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-900/20 ring-1 ring-white/10">
                     <Sparkles className="w-5 h-5 text-white" />
                   </div>
-                  <div className="flex-1 space-y-3">
+                  <div className="flex-1 space-y-4 min-w-0">
                     <div className="group relative">
-                      <Card className="p-4 bg-slate-800/50 border-slate-700/50">
-                        <p className="text-slate-200 whitespace-pre-line leading-relaxed">{message.content}</p>
+                      <Card className="p-5 bg-slate-800/80 border-slate-700/50 shadow-xl backdrop-blur-md rounded-2xl rounded-tl-none">
+                        <div className="prose prose-invert max-w-none">
+                           <p className="text-slate-200 whitespace-pre-line leading-7 text-base">{message.content}</p>
+                        </div>
                       </Card>
                       {onPin && message.query && message.id !== 1 && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handlePinMessage(message)}
-                          className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 px-2 bg-slate-800 hover:bg-slate-700 border border-slate-600"
+                          className="absolute -top-3 -right-3 opacity-0 group-hover:opacity-100 transition-all duration-200 h-8 px-3 bg-slate-800 hover:bg-blue-600 border border-slate-600 hover:border-blue-500 shadow-lg rounded-full"
                           title="固定到我的面板"
                         >
-                          <Pin className="w-3 h-3 mr-1 text-white" />
-                          <span className="text-xs text-white">固定</span>
+                          <Pin className="w-3.5 h-3.5 mr-1.5 text-slate-300 group-hover:text-white" />
+                          <span className="text-xs text-slate-300 group-hover:text-white">固定</span>
                         </Button>
                       )}
                     </div>
                     
                     {message.visualization && (
-                      <DataVisualization data={message.visualization} />
+                      <div className="animate-in fade-in zoom-in-95 duration-500 delay-150">
+                        <DataVisualization data={message.visualization} />
+                      </div>
                     )}
                     
                     {message.insights && message.insights.length > 0 && (
-                      <Card className="p-4 bg-blue-500/10 border-blue-500/20">
-                        <div className="flex items-start gap-2">
-                          <Sparkles className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <Card className="p-4 bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-blue-500/20 shadow-lg animate-in fade-in slide-in-from-left-4 duration-500 delay-300">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                             <Sparkles className="w-4 h-4 text-blue-400" />
+                          </div>
                           <div>
-                            <p className="text-sm text-blue-300 mb-2">💡 AI洞察</p>
-                            <ul className="space-y-1">
+                            <p className="text-sm font-medium text-blue-300 mb-2">AI 智能洞察</p>
+                            <ul className="space-y-2">
                               {message.insights.map((insight, i) => (
-                                <li key={i} className="text-sm text-slate-300">• {insight}</li>
+                                <li key={i} className="text-sm text-slate-300 flex items-start gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
+                                  <span className="leading-relaxed">{insight}</span>
+                                </li>
                               ))}
                             </ul>
                           </div>
@@ -239,23 +283,26 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
               )}
 
               {message.type === 'user' && (
-                <Card className="p-4 bg-blue-600 border-blue-500 max-w-2xl">
-                  <p className="text-white">{message.content}</p>
-                </Card>
+                <div className="flex items-end gap-3 max-w-2xl">
+                   <Card className="p-4 bg-gradient-to-br from-blue-600 to-blue-700 border-blue-500/50 shadow-lg shadow-blue-900/20 rounded-2xl rounded-tr-none text-white">
+                    <p className="leading-relaxed">{message.content}</p>
+                  </Card>
+                   <div className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center flex-shrink-0">
+                      <div className="w-4 h-4 rounded-full bg-slate-400" />
+                   </div>
+                </div>
               )}
             </div>
           ))}
 
           {isLoading && (
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+            <div className="flex items-start gap-4 animate-pulse">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg opacity-80">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <Card className="p-4 bg-slate-800/50 border-slate-700/50">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
-                  <p className="text-slate-400">正在分析数据...</p>
-                </div>
+              <Card className="p-5 bg-slate-800/50 border-slate-700/50 rounded-2xl rounded-tl-none flex items-center gap-3">
+                <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+                <span className="text-slate-400 text-sm font-medium">AI 正在深入分析数据...</span>
               </Card>
             </div>
           )}
@@ -263,10 +310,11 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm p-4">
+      <div className="border-t border-slate-700/50 bg-slate-900/80 backdrop-blur-md p-5 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.3)] z-10">
         <div className="max-w-4xl mx-auto">
-          <div className="flex gap-3 items-end">
-            <div className="flex-1 relative">
+          <div className="flex gap-4 items-end">
+            <div className="flex-1 relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl opacity-20 group-hover:opacity-40 transition duration-500 blur"></div>
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -277,19 +325,20 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
                   }
                 }}
                 placeholder="输入您的问题... (Shift + Enter 换行)"
-                className="min-h-[60px] max-h-[200px] bg-slate-700/50 border-slate-600/50 text-white placeholder:text-slate-500 resize-none"
+                className="relative min-h-[60px] max-h-[200px] bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 resize-none rounded-xl focus:ring-0 focus:border-slate-600 shadow-inner"
               />
             </div>
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="h-[60px] px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+              className="h-[60px] px-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20 rounded-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
             >
-              <Send className="w-5 h-5" />
+              {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
             </Button>
           </div>
-          <p className="text-xs text-slate-500 mt-2">
-            AI助手基于Deepseek模型，可能会出错。请验证重要信息。
+          <p className="text-xs text-slate-500 mt-3 text-center flex items-center justify-center gap-1">
+             <Shield className="w-3 h-3" />
+            AI助手基于Deepseek模型，仅供内部数据分析使用，请注意数据安全。
           </p>
         </div>
       </div>

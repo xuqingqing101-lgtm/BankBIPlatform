@@ -356,6 +356,7 @@ public class HiAgentService {
             result.put("sql", generatedSql);
             result.put("data", data);
             result.put("analysis", analysis);
+            result.put("visualization", determineVisualization(data));
             
             recordAudit(userId, query, generatedSql, "Rows: " + data.size(), System.currentTimeMillis() - startTime, 1, null);
             
@@ -371,6 +372,95 @@ public class HiAgentService {
             
             return result;
         }
+    }
+
+    private Map<String, Object> determineVisualization(List<Map<String, Object>> data) {
+        if (data == null || data.isEmpty()) {
+            return null;
+        }
+        
+        Map<String, Object> firstRow = data.get(0);
+        
+        // Identify X (Label) and Y (Values) columns
+        String xKey = null;
+        List<String> yKeys = new ArrayList<>();
+        
+        for (Map.Entry<String, Object> entry : firstRow.entrySet()) {
+            if (entry.getValue() instanceof Number) {
+                yKeys.add(entry.getKey());
+            } else {
+                // Prefer columns with "name", "date", "type" as X axis
+                if (xKey == null) {
+                    xKey = entry.getKey();
+                } else {
+                    String currentKey = entry.getKey().toLowerCase();
+                    String existingKey = xKey.toLowerCase();
+                    // If current key looks more like a label, swap it
+                    if ((currentKey.contains("name") || currentKey.contains("date") || currentKey.contains("time")) 
+                            && !(existingKey.contains("name") || existingKey.contains("date") || existingKey.contains("time"))) {
+                        xKey = entry.getKey();
+                    }
+                }
+            }
+        }
+        
+        // If we have at least one number column, we can try to chart
+        if (!yKeys.isEmpty()) {
+            // Case: All columns are numbers? Pick first as X
+            if (xKey == null && yKeys.size() > 1) {
+                xKey = yKeys.get(0);
+                yKeys.remove(0);
+            }
+            
+            // If we have a valid X and at least one Y
+            if (xKey != null) {
+                Map<String, Object> vizData = new java.util.HashMap<>();
+                vizData.put("xAxisKey", xKey);
+                
+                // Pass single key for backward compatibility, list for multi-series
+                if (yKeys.size() == 1) {
+                    vizData.put("yAxisKey", yKeys.get(0));
+                } else {
+                    vizData.put("yAxisKeys", yKeys);
+                }
+                
+                vizData.put("series", data);
+                vizData.put("title", "数据分析图表");
+                
+                // Determine Chart Type
+                // If X axis is time-related -> Line Chart
+                // If multiple Y axes -> Bar or Line (prefer Line for trend, Bar for comparison)
+                // Default to Bar
+                String lowerX = xKey.toLowerCase();
+                if (lowerX.contains("date") || lowerX.contains("time") || lowerX.contains("month") || lowerX.contains("year") || lowerX.contains("day")) {
+                    vizData.put("chartType", "line");
+                } else {
+                    vizData.put("chartType", "bar");
+                }
+                
+                return Map.of("type", "chart", "data", vizData);
+            }
+        }
+        
+        // Fallback: Table Visualization
+        if (!data.isEmpty()) {
+             Map<String, Object> vizData = new java.util.HashMap<>();
+             List<String> headers = new ArrayList<>(firstRow.keySet());
+             List<List<Object>> rows = new ArrayList<>();
+             for(Map<String, Object> row : data) {
+                 List<Object> rowData = new ArrayList<>();
+                 for(String header : headers) {
+                     rowData.add(row.get(header));
+                 }
+                 rows.add(rowData);
+             }
+             vizData.put("headers", headers);
+             vizData.put("rows", rows);
+             
+             return Map.of("type", "table", "data", vizData);
+        }
+        
+        return null;
     }
 
     private void recordAudit(Long userId, String query, String sql, String resultSummary, Long time, Integer status, String error) {

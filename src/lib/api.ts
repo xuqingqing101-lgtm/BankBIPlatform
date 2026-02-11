@@ -268,10 +268,13 @@ export async function analyzeData(query: string): Promise<ApiResponse> {
 /**
  * 上传数据文件
  */
-export async function uploadData(file: File): Promise<ApiResponse> {
+export async function uploadData(file: File, tableName?: string): Promise<ApiResponse> {
   try {
     const formData = new FormData();
     formData.append('file', file);
+    if (tableName) {
+      formData.append('tableName', tableName);
+    }
 
     const response = await fetch(`${API_BASE_URL}/data/upload`, {
       method: 'POST',
@@ -285,6 +288,143 @@ export async function uploadData(file: File): Promise<ApiResponse> {
     return await response.json();
   } catch (error) {
     console.error('Upload error:', error);
+    throw error;
+  }
+}
+
+/**
+ * 获取表的所有列
+ */
+export async function getTableColumns(tableId: string): Promise<ApiResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/data/tables/${tableId}/columns`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Get columns failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get columns error:', error);
+    throw error;
+  }
+}
+
+/**
+ * 更新列信息
+ */
+export async function updateColumn(columnId: number, data: { displayName?: string, role?: string, dataType?: string }): Promise<ApiResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/data/columns/${columnId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Update column failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Update column error:', error);
+    throw error;
+  }
+}
+
+/**
+ * 触发数据清洗
+ */
+export async function cleanTable(tableId: string): Promise<ApiResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/data/clean/${tableId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Clean table failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Clean table error:', error);
+    throw error;
+  }
+}
+
+/**
+ * 获取指标列表
+ */
+export async function getMetrics(): Promise<ApiResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/metrics`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Get metrics failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get metrics error:', error);
+    throw error;
+  }
+}
+
+/**
+ * 创建指标
+ */
+export async function createMetric(metric: any): Promise<ApiResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/metrics`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(metric),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Create metric failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Create metric error:', error);
+    throw error;
+  }
+}
+
+/**
+ * 删除指标
+ */
+export async function deleteMetric(id: number): Promise<ApiResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/metrics/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Delete metric failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Delete metric error:', error);
     throw error;
   }
 }
