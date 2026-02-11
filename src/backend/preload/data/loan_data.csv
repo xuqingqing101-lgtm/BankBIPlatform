@@ -1,0 +1,7 @@
+loan_id,customer_name,amount,loan_type,industry,status,npl_ratio
+L001,Corp A,10000000,Corporate,Manufacturing,Normal,0.0
+L002,Corp B,5000000,Corporate,Real Estate,Overdue,1.0
+L003,Corp C,2000000,SME,Retail,Normal,0.0
+L004,Corp D,8000000,Corporate,Technology,Normal,0.0
+L005,Person A,500000,Retail,Individual,Normal,0.0
+L006,Corp E,3000000,SME,Catering,Bad,1.0

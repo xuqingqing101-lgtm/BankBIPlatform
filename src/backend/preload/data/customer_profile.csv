@@ -1,0 +1,7 @@
+customer_id,name,age,assets,risk_level,segment,branch
+1001,Zhang San,35,520000,Medium,Mass Affluent,Beijing
+1002,Li Si,28,20000,Low,Mass,Shanghai
+1003,Wang Wu,50,12000000,High,High Net Worth,Beijing
+1004,Zhao Liu,22,5000,Low,Student,Guangzhou
+1005,Sun Qi,40,300000,Medium,Mass Affluent,Shenzhen
+1006,Zhou Ba,45,8000000,High,High Net Worth,Shanghai

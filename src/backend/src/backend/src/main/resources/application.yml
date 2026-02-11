@@ -1,0 +1,77 @@
+spring:
+  application:
+    name: bank-bi-platform
+  
+  profiles:
+    active: dev
+  
+  # H2数据库配置（开发环境）
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:bank_bi;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    defer-datasource-initialization: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+  
+  # SQL初始化配置
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+  
+  # Redis配置已禁用（开发环境不需要）
+  # redis:
+  #   host: localhost
+  #   port: 6379
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# JWT配置
+jwt:
+  secret: bank-bi-platform-secret-key-2026-please-change-in-production-environment-256-bits
+  expiration: 7200000  # 2小时（毫秒）
+  refresh-expiration: 604800000  # 7天（毫秒）
+
+# HiAgent配置
+hiagent:
+  # 请替换为您的HiAgent API配置
+  api-url: https://api.deepseek.com
+  api-key: ${HIAGENT_API_KEY:sk-cd3054f2de594320bbd78d5a14e75284}
+  model: deepseek-chat
+  timeout: 30000  # 30秒
+  max-tokens: 2000
+  temperature: 0.7
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.bank.bi: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

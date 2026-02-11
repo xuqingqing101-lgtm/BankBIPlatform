@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 测试工具 - 银行智能AI分析平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .status-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .status-checking {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 22px;
+        }
+        
+        .test-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .test-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .test-btn:active {
+            transform: translateY(0);
+        }
+        
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .result-box.show {
+            display: block;
+        }
+        
+        .result-success {
+            border-left: 4px solid #28a745;
+        }
+        
+        .result-error {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .endpoint-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+        
+        .endpoint-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: 4px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .method {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-right: 12px;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .method-get {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .method-post {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 API 测试工具</h1>
+            <p>测试银行智能AI分析平台后端服务</p>
+        </div>
+        
+        <div class="status-card">
+            <div id="statusIndicator" class="status-indicator status-checking">
+                <span>⏳</span>
+                <span>正在检查后端状态...</span>
+            </div>
+            <div id="statusDetails" style="color: #666; font-size: 14px;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎯 快速测试</h2>
+            <div class="test-buttons">
+                <button class="test-btn" onclick="testHealth()">健康检查</button>
+                <button class="test-btn" onclick="testDeposit()">存款分析</button>
+                <button class="test-btn" onclick="testLoan()">贷款分析</button>
+                <button class="test-btn" onclick="testCustomer()">客户画像</button>
+                <button class="test-btn" onclick="testDashboard()">经营驾驶舱</button>
+                <button class="test-btn" onclick="testKnowledge()">知识库</button>
+            </div>
+            <div id="testResult" class="result-box"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 可用的 API 端点</h2>
+            
+            <h3 style="color: #666; font-size: 16px; margin: 16px 0 8px;">健康检查</h3>
+            <div class="endpoint-list">
+                <div class="endpoint-item">
+                    <span class="method method-get">GET</span>
+                    <span>/api/health</span>
+                </div>
+            </div>
+            
+            <h3 style="color: #666; font-size: 16px; margin: 16px 0 8px;">存款业务</h3>
+            <div class="endpoint-list">
+                <div class="endpoint-item">
+                    <span class="method method-post">POST</span>
+                    <span>/api/deposit/analyze</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="method method-get">GET</span>
+                    <span>/api/deposit/indicators</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="method method-get">GET</span>
+                    <span>/api/deposit/trends</span>
+                </div>
+            </div>
+            
+            <h3 style="color: #666; font-size: 16px; margin: 16px 0 8px;">贷款业务</h3>
+            <div class="endpoint-list">
+                <div class="endpoint-item">
+                    <span class="method method-post">POST</span>
+                    <span>/api/loan/analyze</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="method method-get">GET</span>
+                    <span>/api/loan/indicators</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="method method-get">GET</span>
+                    <span>/api/loan/trends</span>
+                </div>
+            </div>
+            
+            <h3 style="color: #666; font-size: 16px; margin: 16px 0 8px;">客户画像</h3>
+            <div class="endpoint-list">
+                <div class="endpoint-item">
+                    <span class="method method-post">POST</span>
+                    <span>/api/customer/analyze</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="method method-get">GET</span>
+                    <span>/api/customer/segments</span>
+                </div>
+            </div>
+            
+            <h3 style="color: #666; font-size: 16px; margin: 16px 0 8px;">经营管理</h3>
+            <div class="endpoint-list">
+                <div class="endpoint-item">
+                    <span class="method method-post">POST</span>
+                    <span>/api/dashboard/analyze</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="method method-get">GET</span>
+                    <span>/api/dashboard/overview</span>
+                </div>
+            </div>
+            
+            <h3 style="color: #666; font-size: 16px; margin: 16px 0 8px;">知识库</h3>
+            <div class="endpoint-list">
+                <div class="endpoint-item">
+                    <span class="method method-post">POST</span>
+                    <span>/api/knowledge/analyze</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="method method-get">GET</span>
+                    <span>/api/knowledge/list</span>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; color: white; margin-top: 30px; opacity: 0.9;">
+            <p>💡 后端地址: <strong>http://localhost:8080</strong></p>
+            <p style="margin-top: 8px; font-size: 14px;">最后更新：2026-02-09</p>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        
+        // 页面加载时检查状态
+        window.addEventListener('load', checkStatus);
+        
+        async function checkStatus() {
+            const indicator = document.getElementById('statusIndicator');
+            const details = document.getElementById('statusDetails');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                
+                indicator.className = 'status-indicator status-online';
+                indicator.innerHTML = '<span>✅</span><span>后端服务正常运行</span>';
+                details.innerHTML = `
+                    <strong>状态:</strong> ${data.status}<br>
+                    <strong>消息:</strong> ${data.message}<br>
+                    <strong>时间:</strong> ${data.timestamp || new Date().toISOString()}
+                `;
+            } catch (error) {
+                indicator.className = 'status-indicator status-offline';
+                indicator.innerHTML = '<span>❌</span><span>无法连接到后端服务</span>';
+                details.innerHTML = `
+                    <strong>错误:</strong> ${error.message}<br>
+                    <strong>提示:</strong> 请确保后端服务已启动（运行 智能启动.bat）
+                `;
+            }
+        }
+        
+        function showResult(success, data) {
+            const resultBox = document.getElementById('testResult');
+            resultBox.className = success ? 'result-box show result-success' : 'result-box show result-error';
+            resultBox.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                showResult(true, data);
+            } catch (error) {
+                showResult(false, { error: error.message });
+            }
+        }
+        
+        async function testDeposit() {
+            try {
+                const response = await fetch(`${API_BASE}/api/deposit/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: '分析存款趋势' })
+                });
+                const data = await response.json();
+                showResult(true, data);
+            } catch (error) {
+                showResult(false, { error: error.message });
+            }
+        }
+        
+        async function testLoan() {
+            try {
+                const response = await fetch(`${API_BASE}/api/loan/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: '贷款业务概况' })
+                });
+                const data = await response.json();
+                showResult(true, data);
+            } catch (error) {
+                showResult(false, { error: error.message });
+            }
+        }
+        
+        async function testCustomer() {
+            try {
+                const response = await fetch(`${API_BASE}/api/customer/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: '客户分布情况' })
+                });
+                const data = await response.json();
+                showResult(true, data);
+            } catch (error) {
+                showResult(false, { error: error.message });
+            }
+        }
+        
+        async function testDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/api/dashboard/overview`);
+                const data = await response.json();
+                showResult(true, data);
+            } catch (error) {
+                showResult(false, { error: error.message });
+            }
+        }
+        
+        async function testKnowledge() {
+            try {
+                const response = await fetch(`${API_BASE}/api/knowledge/list`);
+                const data = await response.json();
+                showResult(true, data);
+            } catch (error) {
+                showResult(false, { error: error.message });
+            }
+        }
+    </script>
+</body>
+</html>

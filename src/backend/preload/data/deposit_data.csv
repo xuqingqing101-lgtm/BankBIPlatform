@@ -1,0 +1,7 @@
+customer_id,customer_name,deposit_type,amount,product_name,branch
+1001,Zhang San,Fixed,500000,Golden Deposit 1Y,Beijing
+1002,Li Si,Current,20000,Daily Interest,Shanghai
+1003,Wang Wu,Fixed,12000000,Diamond Deposit 3Y,Beijing
+1004,Zhao Liu,Current,5000,Daily Interest,Guangzhou
+1005,Sun Qi,Fixed,300000,Golden Deposit 1Y,Shenzhen
+1006,Zhou Ba,Fixed,8000000,Diamond Deposit 2Y,Shanghai

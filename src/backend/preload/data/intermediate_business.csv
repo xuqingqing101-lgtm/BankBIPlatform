@@ -1,0 +1,6 @@
+transaction_id,type,amount,fee,branch,date
+T001,Wealth Management,100000,500,Beijing,2023-05-01
+T002,Insurance,50000,2000,Shanghai,2023-05-02
+T003,Fund,20000,300,Guangzhou,2023-05-03
+T004,Wealth Management,500000,2500,Beijing,2023-05-04
+T005,Credit Card,10000,100,Shenzhen,2023-05-05
