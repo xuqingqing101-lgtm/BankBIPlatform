@@ -1,0 +1,15 @@
+node_modules
+target/
+*.class
+*.jar
+*.log
+uploads/
+.idea/
+*.iml
+.DS_Store
+src/backend/uploads/
+src/backend/target/target/
+*.jar
+target/
+*.jar
+*.class

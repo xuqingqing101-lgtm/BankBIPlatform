@@ -1,0 +1,21 @@
+contract_id,customer_name,customer_type,loan_type,amount,interest_rate,start_date,end_date,status,risk_level,overdue_days
+L001,RealEstateCo,Corporate,Business Loan,200000000,4.25,2023-01-01,2028-01-01,Active,Normal,0
+L002,TechCorp,Corporate,Working Capital,50000000,3.85,2023-02-01,2024-02-01,Active,Normal,0
+L003,BuildMaster,Corporate,Project Loan,150000000,4.50,2023-03-01,2026-03-01,Active,Attention,15
+L004,RetailChain,Corporate,Working Capital,30000000,4.00,2023-04-01,2024-04-01,Active,Normal,0
+L005,HotelGroup,Corporate,Business Loan,80000000,4.20,2023-05-01,2030-05-01,Active,Normal,0
+L006,PharmaCo,Corporate,Working Capital,40000000,3.90,2023-06-01,2024-06-01,Active,Normal,0
+L007,LogisticsLtd,Corporate,Vehicle Loan,20000000,4.10,2023-07-01,2026-07-01,Active,Normal,0
+L008,EduServices,Corporate,Business Loan,15000000,4.30,2023-08-01,2028-08-01,Active,Normal,0
+L009,ZhangSan,Retail,Mortgage,2000000,3.50,2023-01-10,2053-01-10,Active,Normal,0
+L010,LiSi,Retail,Consumer Loan,150000,5.60,2023-02-15,2025-02-15,Active,Normal,0
+L011,WangWu,Retail,Mortgage,5000000,3.40,2023-03-20,2043-03-20,Active,Normal,0
+L012,ZhaoLiu,Retail,Personal Business,800000,4.50,2023-04-25,2026-04-25,Active,Attention,30
+L013,QianQi,Retail,Credit Loan,50000,6.50,2023-05-05,2024-05-05,Overdue,Substandard,120
+L014,SunBa,Retail,Mortgage,1200000,3.60,2023-06-10,2048-06-10,Active,Normal,0
+L015,ZhouJiu,Retail,Mortgage,8000000,3.30,2023-07-15,2038-07-15,Active,Normal,0
+L016,WuShi,Retail,Consumer Loan,30000,5.80,2023-08-20,2024-08-20,Active,Normal,0
+L017,ZhengYi,Retail,Mortgage,3000000,3.55,2023-09-05,2053-09-05,Active,Normal,0
+L018,WangEr,Retail,Credit Loan,80000,6.20,2023-10-10,2024-10-10,Active,Attention,45
+L019,FengSan,Retail,Mortgage,4500000,3.45,2023-11-15,2043-11-15,Active,Normal,0
+L020,ChenSi,Retail,Personal Business,1500000,4.40,2023-12-20,2026-12-20,Active,Doubtful,90

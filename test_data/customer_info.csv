@@ -1,0 +1,17 @@
+customer_id,name,type,segment,aum,credit_score,risk_rating,manager
+C001,TechCorp,Corporate,VIP,150000000,850,Low,ZhangMgr
+C002,GlobalTrade,Corporate,Diamond,217000000,880,Low,LiMgr
+C003,BuildMaster,Corporate,Standard,45000000,750,Medium,WangMgr
+C004,RetailChain,Corporate,VIP,32000000,780,Low,ZhaoMgr
+C005,HotelGroup,Corporate,Standard,68000000,720,Medium,ZhangMgr
+C006,PharmaCo,Corporate,VIP,92000000,820,Low,LiMgr
+C007,LogisticsLtd,Corporate,Standard,18000000,680,Medium,WangMgr
+C008,EduServices,Corporate,Standard,12000000,700,Low,ZhaoMgr
+C009,ZhangSan,Retail,Standard,350000,750,Low,ChenMgr
+C010,LiSi,Retail,VIP,2000000,800,Low,LiuMgr
+C011,WangWu,Retail,Diamond,5500000,850,Low,ChenMgr
+C012,ZhaoLiu,Retail,VIP,1500000,780,Low,LiuMgr
+C013,QianQi,Retail,Standard,130000,620,High,ChenMgr
+C014,SunBa,Retail,VIP,3000000,810,Low,LiuMgr
+C015,ZhouJiu,Retail,Private,8500000,890,Low,ChenMgr
+C016,WuShi,Retail,Standard,45000,650,Medium,LiuMgr

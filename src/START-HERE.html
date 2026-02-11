@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 Failed to fetch - 立即修复</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        .alert {
+            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(255,0,0,0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 20px 60px rgba(255,0,0,0.4);
+            }
+            50% {
+                transform: scale(1.02);
+                box-shadow: 0 25px 70px rgba(255,0,0,0.6);
+            }
+        }
+        
+        .alert h1 {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .alert p {
+            font-size: 24px;
+            opacity: 0.95;
+        }
+        
+        .main-card {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 3px solid #0f3460;
+            border-radius: 25px;
+            padding: 50px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+        }
+        
+        .status {
+            background: rgba(255, 193, 7, 0.15);
+            border-left: 5px solid #ffc107;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+        
+        .status h2 {
+            color: #ffc107;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .status p {
+            color: #ddd;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        
+        .solution {
+            background: rgba(0, 123, 255, 0.15);
+            border-left: 5px solid #007bff;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+        
+        .solution h2 {
+            color: #007bff;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .steps {
+            margin-top: 30px;
+        }
+        
+        .step {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .step:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 123, 255, 0.5);
+            transform: translateX(10px);
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 60px;
+            font-size: 32px;
+            font-weight: bold;
+            margin-right: 20px;
+            box-shadow: 0 10px 30px rgba(0, 123, 255, 0.4);
+        }
+        
+        .step h3 {
+            display: inline-block;
+            font-size: 28px;
+            vertical-align: top;
+            margin-top: 15px;
+        }
+        
+        .step-content {
+            margin-left: 80px;
+            margin-top: 15px;
+        }
+        
+        .step-content p {
+            font-size: 18px;
+            color: #ccc;
+            line-height: 1.8;
+            margin: 10px 0;
+        }
+        
+        .command {
+            background: #000;
+            border: 3px solid #007bff;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            position: relative;
+        }
+        
+        .command code {
+            display: block;
+            color: #0f0;
+            font-size: 22px;
+            line-height: 1.8;
+        }
+        
+        .command .comment {
+            color: #888;
+            font-size: 16px;
+        }
+        
+        .copy-btn {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 123, 255, 0.3);
+            margin-top: 15px;
+        }
+        
+        .copy-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 123, 255, 0.5);
+        }
+        
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+        
+        .success {
+            background: rgba(40, 167, 69, 0.15);
+            border: 2px solid #28a745;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .success h4 {
+            color: #28a745;
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+        
+        .success ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .success li {
+            padding: 8px 0;
+            font-size: 16px;
+            color: #ccc;
+        }
+        
+        .success li:before {
+            content: '✅ ';
+            font-size: 18px;
+        }
+        
+        .warning {
+            background: rgba(255, 152, 0, 0.15);
+            border: 2px solid #ff9800;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .warning strong {
+            color: #ff9800;
+            font-size: 18px;
+        }
+        
+        .alternative {
+            background: rgba(156, 39, 176, 0.15);
+            border-left: 5px solid #9c27b0;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        
+        .alternative h3 {
+            color: #9c27b0;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer p {
+            font-size: 20px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="alert">
+            <h1>🚨 Failed to fetch</h1>
+            <p>看到这个错误了？</p>
+        </div>
+        
+        <div class="main-card">
+            <div class="status">
+                <h2>⚠️ 这是正常的！</h2>
+                <p>
+                    前端正在尝试连接后端API（<code style="color: #ffc107;">http://localhost:8080</code>），但连接失败了。
+                </p>
+                <p style="margin-top: 15px; font-size: 16px; opacity: 0.9;">
+                    原因：后端 Spring Boot 服务还没有在你的本地电脑上启动。
+                </p>
+            </div>
+            
+            <div class="solution">
+                <h2>💡 你需要做什么？</h2>
+                <p style="color: #ddd; font-size: 18px;">
+                    在本地电脑上启动后端服务，然后刷新前端页面。
+                </p>
+            </div>
+            
+            <div class="steps">
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <h3>打开命令行</h3>
+                    <div class="step-content">
+                        <p>按 <strong>Win + R</strong>，输入 <strong>cmd</strong>，按回车</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <h3>复制并运行命令</h3>
+                    <div class="step-content">
+                        <div class="command">
+                            <code>
+                                <span class="comment"># 进入backend目录</span><br>
+                                cd backend<br>
+                                <br>
+                                <span class="comment"># 启动后端服务</span><br>
+                                RUN.bat
+                            </code>
+                        </div>
+                        <button class="copy-btn" onclick="copyCommand()">
+                            📋 复制命令到剪贴板
+                        </button>
+                        <p style="margin-top: 10px; font-size: 14px; color: #888;">
+                            复制后粘贴到命令行，按回车运行
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <h3>等待启动完成</h3>
+                    <div class="step-content">
+                        <p>大约需要 1-2 分钟（首次启动可能更久）</p>
+                        
+                        <div class="success">
+                            <h4>✅ 启动成功标志：</h4>
+                            <ul>
+                                <li>显示 "🏦 银行智能AI分析平台已启动"</li>
+                                <li>看到多个 "Mapped" 字样</li>
+                                <li>没有红色错误信息</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="warning">
+                            <p>
+                                <strong>⚠️ 重要：</strong> 
+                                启动成功后，<strong style="color: #ff9800;">保持命令行窗口打开！</strong>
+                                关闭窗口会停止服务。
+                            </p>
+                        </div>
+                        
+                        <p style="margin-top: 20px; font-size: 18px; color: #0f0;">
+                            然后刷新前端页面（按 <strong>Ctrl + Shift + R</strong>）
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alternative">
+                <h3>🎯 更简单的方式</h3>
+                <p style="color: #ddd; font-size: 16px; margin: 10px 0;">
+                    在项目根目录找到 <code style="color: #9c27b0; background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px;">启动后端.bat</code> 文件，双击运行。
+                </p>
+                <p style="color: #aaa; font-size: 14px; margin-top: 15px;">
+                    或者打开 <code style="color: #9c27b0;">index.html</code> 查看完整的启动中心。
+                </p>
+            </div>
+            
+            <div class="footer">
+                <p>完成后，"Failed to fetch" 错误会自动消失 🎉</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function copyCommand() {
+            const text = 'cd backend\nRUN.bat';
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.innerHTML = '✅ 已复制！粘贴到命令行并回车';
+                btn.style.background = 'linear-gradient(135deg, #28a745 0%, #218838 100%)';
+                
+                setTimeout(() => {
+                    btn.innerHTML = '📋 复制命令到剪贴板';
+                    btn.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+                }, 3000);
+            }).catch(err => {
+                alert('复制失败，请手动复制命令');
+            });
+        }
+    </script>
+</body>
+</html>
