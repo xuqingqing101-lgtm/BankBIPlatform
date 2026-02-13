@@ -23,9 +23,11 @@ public class HiAgentConfig {
     
     @Bean
     public WebClient hiAgentWebClient() {
+        String base = java.util.Objects.requireNonNull(apiUrl, "hiagent.apiUrl must not be null");
+        String key = java.util.Objects.requireNonNull(apiKey, "hiagent.apiKey must not be null");
         return WebClient.builder()
-                .baseUrl(apiUrl)
-                .defaultHeader("Authorization", "Bearer " + apiKey)
+                .baseUrl(base)
+                .defaultHeader("Authorization", "Bearer " + key)
                 .defaultHeader("Content-Type", "application/json")
                 .build();
     }

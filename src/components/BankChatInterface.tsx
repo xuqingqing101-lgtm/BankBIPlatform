@@ -70,14 +70,55 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
     setInput('');
     setIsLoading(true);
 
-    // 模拟AI响应
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(currentQuery);
-      // 保存对应的问题
-      aiResponse.query = currentQuery;
-      setMessages(prev => [...prev, aiResponse]);
-      setIsLoading(false);
-    }, 1500);
+    try {
+        // 调用后端API
+        // 注意：这里需要根据当前上下文传入 module/domain
+        // 假设我们从某个上下文或状态中获取，这里暂时设为 'general' 或根据页面路径推断
+        // 为了支持领域隔离，这里应该传递用户可能选择的领域，或者后端自动推断
+        // 简单起见，这里传入 'dashboard' 或者不传由后端处理
+        // 如果有明确的 Tab 上下文，可以传入对应的 domain
+        const domain = 'dashboard'; // Default domain context
+        
+        const response = await import('../lib/api').then(api => api.analyzeData(currentQuery, domain));
+        
+        if (response.success) {
+            const result = response.data;
+            const aiResponse: Message = {
+                id: Date.now(),
+                type: 'assistant',
+                content: result.answer || result.summary || '分析完成',
+                timestamp: new Date(),
+                query: currentQuery,
+                visualization: result.chartData ? {
+                    type: 'chart',
+                    data: result.chartData
+                } : undefined,
+                insights: result.insights
+            };
+            setMessages(prev => [...prev, aiResponse]);
+        } else {
+             const errorResponse: Message = {
+                id: Date.now(),
+                type: 'assistant',
+                content: '抱歉，分析过程中出现了错误：' + (response.message || '未知错误'),
+                timestamp: new Date(),
+                query: currentQuery
+            };
+            setMessages(prev => [...prev, errorResponse]);
+        }
+    } catch (error) {
+        console.error('Chat error:', error);
+        const errorResponse: Message = {
+            id: Date.now(),
+            type: 'assistant',
+            content: '抱歉，网络请求失败，请稍后重试。',
+            timestamp: new Date(),
+            query: currentQuery
+        };
+        setMessages(prev => [...prev, errorResponse]);
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const handlePinMessage = (message: Message) => {
@@ -108,9 +149,9 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <div className="h-full flex flex-col min-h-0">
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth" ref={scrollRef}>
         <div className="max-w-5xl mx-auto space-y-4 md:space-y-6">
           <div className="flex justify-end mb-2">
             <Button

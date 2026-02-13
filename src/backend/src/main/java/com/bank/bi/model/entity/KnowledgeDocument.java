@@ -52,5 +52,6 @@ public class KnowledgeDocument {
             joinColumns = @JoinColumn(name = "document_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
+    @Builder.Default
     private Set<Role> allowedRoles = new HashSet<>();
 }

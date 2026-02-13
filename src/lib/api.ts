@@ -236,14 +236,14 @@ export async function askKnowledge(query: string): Promise<ApiResponse> {
 /**
  * 智能数据分析（Text-to-SQL）
  */
-export async function analyzeData(query: string): Promise<ApiResponse> {
+export async function analyzeData(query: string, domain?: string): Promise<ApiResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/ai/analyze-data`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, domain }),
     });
 
     // 检查响应类型
@@ -266,12 +266,65 @@ export async function analyzeData(query: string): Promise<ApiResponse> {
 }
 
 /**
- * 上传数据文件
+ * 导入Schema
  */
-export async function uploadData(file: File, tableName?: string): Promise<ApiResponse> {
+export async function importSchema(file: File, domain?: string): Promise<ApiResponse> {
   try {
     const formData = new FormData();
     formData.append('file', file);
+    if (domain) {
+      formData.append('domain', domain);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/data/schema/import`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Import schema failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Import schema error:', error);
+    throw error;
+  }
+}
+
+/**
+ * 导入数据
+ */
+export async function importData(file: File, mode: 'overwrite' | 'append' = 'append'): Promise<ApiResponse> {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('mode', mode);
+
+    const response = await fetch(`${API_BASE_URL}/data/import`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Import data failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Import data error:', error);
+    throw error;
+  }
+}
+
+/**
+ * 上传数据文件 (Deprecated)
+ */
+export async function uploadData(file: File, schemaFile: File, tableName?: string): Promise<ApiResponse> {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('schemaFile', schemaFile);
     if (tableName) {
       formData.append('tableName', tableName);
     }

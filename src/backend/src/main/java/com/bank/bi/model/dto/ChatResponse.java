@@ -27,4 +27,6 @@ public class ChatResponse {
     private List<String> suggestions;  // 推荐追问
     
     private Long timestamp;
+    
+    private String txId; // Transaction ID for tracing
 }

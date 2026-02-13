@@ -16,7 +16,7 @@ public class MetricService {
     private final MetricRepository metricRepository;
 
     public List<Metric> getUserMetrics(Long userId) {
-        return metricRepository.findByUserId(userId);
+        return metricRepository.findByUserId(java.util.Objects.requireNonNull(userId));
     }
 
     @Transactional
@@ -27,6 +27,6 @@ public class MetricService {
 
     @Transactional
     public void deleteMetric(Long id) {
-        metricRepository.deleteById(id);
+        metricRepository.deleteById(java.util.Objects.requireNonNull(id));
     }
 }

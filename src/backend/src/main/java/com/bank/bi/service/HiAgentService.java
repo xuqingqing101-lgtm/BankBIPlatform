@@ -228,7 +228,7 @@ public class HiAgentService {
      * 智能数据分析（Text-to-SQL）
      */
     @Transactional
-    public Map<String, Object> analyzeData(String query, Long userId) {
+    public Map<String, Object> analyzeData(String query, Long userId, String domain) {
         long startTime = System.currentTimeMillis();
         Map<String, Object> result = new java.util.HashMap<>();
         String generatedSql = null;
@@ -240,14 +240,18 @@ public class HiAgentService {
             User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
             String dataScope = user.getDataScope(); // e.g. "Beijing Branch"
 
-            // 1. 获取用户有权限的数据表 schema
-            List<DataTable> tables = dataManagementService.getUserTables(userId);
+            // 1. 获取用户有权限的数据表 schema (根据领域过滤)
+            List<DataTable> tables = dataManagementService.getUserTablesByDomain(userId, domain);
             
             if (tables.isEmpty()) {
-                // Fallback to simulated data if no real tables uploaded
-                Map<String, Object> simResult = analyzeDataSimulated(query);
-                recordAudit(userId, query, "SIMULATED_SQL", "Simulated Data", System.currentTimeMillis() - startTime, 1, null);
-                return simResult;
+                // 如果指定领域下没有表，尝试获取所有表（作为回退）
+                // tables = dataManagementService.getUserTables(userId);
+                // if (tables.isEmpty()) {
+                    // Fallback to simulated data if no real tables uploaded
+                    Map<String, Object> simResult = analyzeDataSimulated(query);
+                    recordAudit(userId, query, "SIMULATED_SQL", "Simulated Data", System.currentTimeMillis() - startTime, 1, null);
+                    return simResult;
+                // }
             }
             
             // 2. 构建 Prompt 让 AI 生成结构化查询参数 (JSON) 而非直接 SQL
@@ -317,8 +321,80 @@ public class HiAgentService {
             
             log.info("生成的安全 SQL: {}", generatedSql);
             
-            // 4. 执行 SQL
-            data = dataManagementService.executeQuery(generatedSql);
+            // 4. 执行 SQL (含自动修复机制)
+            int maxRetries = 10;
+            int retryCount = 0;
+            
+            while (retryCount < maxRetries) {
+                try {
+                    data = dataManagementService.executeQuery(generatedSql);
+                    break; // 执行成功，跳出循环
+                } catch (Exception e) {
+                    retryCount++;
+                    log.error("SQL执行失败 (第 {} 次尝试): {}", retryCount, e.getMessage());
+                    
+                    if (retryCount >= maxRetries) {
+                        throw new RuntimeException("SQL执行失败且超过最大重试次数: " + e.getMessage());
+                    }
+                    
+                    // 构造修复 Prompt
+                    String repairPrompt = "你是一个 SQL 修复专家。上一次生成的查询参数导致了 SQL 执行错误。请根据错误信息和数据库 Schema，修正并重新生成结构化的 JSON 查询对象。\n" +
+                            "\n" +
+                            "数据库 Schema:\n" +
+                            schemaDescription + "\n" +
+                            "\n" +
+                            "用户原始问题: " + query + "\n" +
+                            "\n" +
+                            "失败的 SQL: " + generatedSql + "\n" +
+                            "\n" +
+                            "错误信息: " + e.getMessage() + "\n" +
+                            "\n" +
+                            "要求:\n" +
+                            "1. 仔细分析错误原因（如列名不存在、类型不匹配、函数使用错误等）。\n" +
+                            "2. 输出格式必须与之前一致（仅 JSON）。\n" +
+                            "3. 不要输出 SQL，只输出 JSON 配置对象。\n" +
+                            "\n" +
+                            "JSON 格式示例:\n" +
+                            "{\n" +
+                            "    \"table\": \"目标表名\",\n" +
+                            "    \"columns\": [\"列名1\"],\n" +
+                            "    \"filters\": [{\"column\": \"列名\", \"operator\": \"=\", \"value\": \"值\"}]\n" +
+                            "}";
+                            
+                    // 调用 AI 修复
+                    HiAgentRequest repairRequest = HiAgentRequest.builder()
+                            .model(hiAgentConfig.getModel())
+                            .messages(List.of(HiAgentRequest.Message.builder().role("user").content(repairPrompt).build()))
+                            .temperature(0.1)
+                            .maxTokens(500)
+                            .stream(false)
+                            .build();
+                            
+                    HiAgentResponse repairResponse = chat(repairRequest);
+                    jsonStr = repairResponse.getChoices().get(0).getMessage().getContent().trim();
+                    
+                    // 清理 JSON
+                    if (jsonStr.contains("```json")) {
+                        jsonStr = jsonStr.substring(jsonStr.indexOf("```json") + 7);
+                        if (jsonStr.contains("```")) jsonStr = jsonStr.substring(0, jsonStr.indexOf("```"));
+                    } else if (jsonStr.contains("```")) {
+                        jsonStr = jsonStr.substring(jsonStr.indexOf("```") + 3);
+                        if (jsonStr.contains("```")) jsonStr = jsonStr.substring(0, jsonStr.indexOf("```"));
+                    }
+                    jsonStr = jsonStr.trim();
+                    
+                    log.info("AI 修复后的查询参数: {}", jsonStr);
+                    
+                    // 重新解析与构建 SQL
+                    if (jsonStr.contains("\"error\"") && jsonStr.contains("\"table\": null")) {
+                         throw new RuntimeException("AI 无法修复该查询");
+                    }
+                    
+                    queryRequest = mapper.readValue(jsonStr, com.bank.bi.util.SafeQueryBuilder.QueryRequest.class);
+                    generatedSql = queryBuilder.buildSql(queryRequest, dataScope);
+                    log.info("修复后的 SQL: {}", generatedSql);
+                }
+            }
             
             // 4.1 数据脱敏 (Result Masking)
             List<Map<String, Object>> maskedData = new ArrayList<>();

@@ -1,0 +1,13 @@
+{
+  "user_query": "统计各分行今年的存款总额",
+  "expected_output": {
+    "table": "deposit",
+    "columns": ["branch_name", "SUM(amount) as total_deposit"],
+    "filters": [
+      {"column": "open_date", "operator": ">=", "value": "2024-01-01"}
+    ],
+    "groupBy": ["branch_name"],
+    "orderBy": ["total_deposit DESC"],
+    "limit": 50
+  }
+}

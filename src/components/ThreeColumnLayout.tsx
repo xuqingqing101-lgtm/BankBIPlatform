@@ -261,7 +261,7 @@ export function ThreeColumnLayout({
   // 桌面端布局
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex-1 flex overflow-hidden">
+      <div className="w-full h-full flex overflow-hidden">
         {/* 左侧栏 - 导航 */}
         {!leftCollapsed && !isLeftMaximized && !isRightMaximized && (
           <Resizable
@@ -436,7 +436,7 @@ export function ThreeColumnLayout({
 
         {/* 右侧栏 - 主内容区 */}
         {!isRightMaximized && (
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
             {children}
           </div>
         )}

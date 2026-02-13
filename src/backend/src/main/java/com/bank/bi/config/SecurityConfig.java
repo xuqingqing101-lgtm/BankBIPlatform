@@ -59,6 +59,7 @@ public class SecurityConfig {
                 // H2控制台配置
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
         
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
     

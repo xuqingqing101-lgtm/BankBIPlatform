@@ -9,7 +9,7 @@ import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
 import { Upload, FileSpreadsheet, Trash2, Plus, Save, Play, CheckCircle2, AlertCircle, RefreshCw, Database, Tag, BarChart2, Settings, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { uploadData, getDataTables, getTableColumns, updateColumn, cleanTable, getMetrics, createMetric, deleteMetric } from '../lib/api';
+import { uploadData, getDataTables, getTableColumns, updateColumn, cleanTable, getMetrics, createMetric, deleteMetric, importSchema, importData } from '../lib/api';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,7 @@ interface ColumnData {
   displayName: string;
   dataType: string;
   columnRole: string;
+  description?: string;
 }
 
 interface MetricData {
@@ -48,8 +49,12 @@ export function DataManager() {
   const [activeTab, setActiveTab] = useState('import');
   const [tables, setTables] = useState<TableData[]>([]);
   const [metrics, setMetrics] = useState<MetricData[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [schemaUploading, setSchemaUploading] = useState(false);
+  const [dataUploading, setDataUploading] = useState(false);
   const [cleaning, setCleaning] = useState<string | null>(null);
+  const [dataFile, setDataFile] = useState<File | null>(null);
+  const [schemaFile, setSchemaFile] = useState<File | null>(null);
+  const [selectedDomain, setSelectedDomain] = useState<string>('deposit'); // Default domain
 
   // Label Tab State
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
@@ -126,26 +131,68 @@ export function DataManager() {
     }
   };
   
-  // 处理上传
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setUploading(true);
-      try {
-        const response = await uploadData(file);
-        if (response.success) {
-          toast.success('文件上传成功', { description: '数据已自动清洗并存入数据库' });
-          await loadTables();
-        } else {
-          toast.error('上传失败', { description: response.message });
+  // 处理数据文件选择
+  const handleDataFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) setDataFile(e.target.files[0]);
+  };
+
+  // 处理Schema文件选择
+  const handleSchemaFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) setSchemaFile(e.target.files[0]);
+  };
+
+  // 提交Schema
+  const handleSchemaSubmit = async () => {
+    if (!schemaFile) {
+      toast.error('请选择Schema文件');
+      return;
+    }
+    
+    setSchemaUploading(true);
+    try {
+      const response = await importSchema(schemaFile, selectedDomain);
+      if (response.success) {
+        toast.success('Schema导入成功');
+        if (response.data && response.data.length > 0) {
+            // 将List<String>的logs展示出来
+            console.log('Schema Logs:', response.data);
+            toast.info('Schema变更详情', { description: '详情请查看控制台' });
         }
-      } catch (error) {
-        toast.error('上传出错', { description: String(error) });
-      } finally {
-        setUploading(false);
+        await loadTables();
+        setSchemaFile(null);
+      } else {
+        toast.error('导入失败', { description: response.message });
       }
+    } catch (error) {
+      toast.error('导入出错', { description: String(error) });
+    } finally {
+      setSchemaUploading(false);
     }
   };
+
+  // 提交数据
+  const handleDataSubmit = async (mode: 'overwrite' | 'append') => {
+      if (!dataFile) {
+          toast.error('请选择数据文件');
+          return;
+      }
+
+      setDataUploading(true);
+      try {
+          const response = await importData(dataFile, mode);
+          if (response.success) {
+              toast.success('数据导入成功', { description: response.data });
+              await loadTables();
+              setDataFile(null);
+          } else {
+              toast.error('导入失败', { description: response.message });
+          }
+      } catch (error) {
+          toast.error('导入出错', { description: String(error) });
+      } finally {
+          setDataUploading(false);
+      }
+  }
 
   // 处理清洗
   const handleClean = async (id: string) => {
@@ -304,31 +351,111 @@ export function DataManager() {
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">上传新数据</CardTitle>
-                <CardDescription className="text-slate-400">支持 .xlsx, .csv 格式</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center hover:border-blue-500 transition-colors bg-slate-900/50">
-                  <Upload className="w-10 h-10 text-slate-400 mx-auto mb-4" />
-                  <p className="text-sm text-slate-300 mb-2">拖拽文件到此处 或</p>
-                  <div className="relative">
-                    <input 
-                      type="file" 
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      accept=".xlsx,.xls,.csv"
-                      onChange={handleUpload}
-                      disabled={uploading}
-                    />
-                    <Button disabled={uploading} className="bg-blue-600 hover:bg-blue-700">
-                      {uploading ? '上传中...' : '选择文件'}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-4">单次最大支持 100MB</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+                {/* Schema Import Card */}
+                <Card className="bg-slate-800/50 border-slate-700">
+                  <CardHeader>
+                    <CardTitle className="text-white">1. 导入表结构 (Schema)</CardTitle>
+                    <CardDescription className="text-slate-400">上传Excel定义表结构</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <div className="border-2 border-dashed border-slate-600 rounded-lg p-6 text-center hover:border-blue-500 transition-colors bg-slate-900/50 relative">
+                        <Tag className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                        <p className="text-sm text-slate-300 mb-2">Schema文件</p>
+                        <p className="text-xs text-slate-500 mb-4 truncate px-2">{schemaFile ? schemaFile.name : '未选择'}</p>
+                        <input 
+                          type="file" 
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          accept=".xlsx,.xls,.csv"
+                          onChange={handleSchemaFileChange}
+                          disabled={schemaUploading}
+                        />
+                        <Button variant="secondary" size="sm" disabled={schemaUploading} className="pointer-events-none">
+                          选择Schema
+                        </Button>
+                      </div>
+
+                      <div className="mt-4">
+                        <Label className="text-slate-300 mb-2 block">所属领域</Label>
+                        <select 
+                            value={selectedDomain}
+                            onChange={(e) => setSelectedDomain(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-600 rounded-md p-2 text-white text-sm"
+                            disabled={schemaUploading}
+                        >
+                            <option value="deposit">存款 (Deposit)</option>
+                            <option value="loan">贷款 (Loan)</option>
+                            <option value="transaction">交易 (Transaction)</option>
+                            <option value="customer">客户 (Customer)</option>
+                            <option value="risk">风险 (Risk)</option>
+                            <option value="other">其他 (Other)</option>
+                        </select>
+                      </div>
+
+                      <div className="mt-4 flex justify-center">
+                        <Button 
+                            onClick={handleSchemaSubmit} 
+                            disabled={schemaUploading || !schemaFile}
+                            className="bg-blue-600 hover:bg-blue-700 w-full"
+                        >
+                          {schemaUploading ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                导入中...
+                              </>
+                          ) : (
+                              <>
+                                <Upload className="w-4 h-4 mr-2" />
+                                导入 Schema
+                              </>
+                          )}
+                        </Button>
+                      </div>
+                  </CardContent>
+                </Card>
+
+                {/* Data Import Card */}
+                <Card className="bg-slate-800/50 border-slate-700">
+                  <CardHeader>
+                    <CardTitle className="text-white">2. 导入数据</CardTitle>
+                    <CardDescription className="text-slate-400">上传数据文件到已存在的表</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <div className="border-2 border-dashed border-slate-600 rounded-lg p-6 text-center hover:border-blue-500 transition-colors bg-slate-900/50 relative">
+                        <FileSpreadsheet className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                        <p className="text-sm text-slate-300 mb-2">数据文件</p>
+                        <p className="text-xs text-slate-500 mb-4 truncate px-2">{dataFile ? dataFile.name : '未选择'}</p>
+                        <input 
+                          type="file" 
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          accept=".xlsx,.xls,.csv"
+                          onChange={handleDataFileChange}
+                          disabled={dataUploading}
+                        />
+                        <Button variant="secondary" size="sm" disabled={dataUploading} className="pointer-events-none">
+                          选择数据
+                        </Button>
+                      </div>
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                         <Button 
+                            onClick={() => handleDataSubmit('overwrite')} 
+                            disabled={dataUploading || !dataFile}
+                            variant="destructive"
+                            className="w-full"
+                        >
+                           {dataUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : '全表覆盖'}
+                        </Button>
+                        <Button 
+                            onClick={() => handleDataSubmit('append')} 
+                            disabled={dataUploading || !dataFile}
+                            className="bg-green-600 hover:bg-green-700 w-full"
+                        >
+                           {dataUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : '新增数据'}
+                        </Button>
+                      </div>
+                  </CardContent>
+                </Card>
+            </div>
           </div>
         </TabsContent>
 
@@ -421,6 +548,7 @@ export function DataManager() {
                             <TableHead className="text-slate-300">字段名</TableHead>
                             <TableHead className="text-slate-300">数据类型</TableHead>
                             <TableHead className="text-slate-300">业务标签 (Label)</TableHead>
+                            <TableHead className="text-slate-300">字段含义 (Description)</TableHead>
                             <TableHead className="text-slate-300">字段分类</TableHead>
                         </TableRow>
                         </TableHeader>
@@ -447,6 +575,9 @@ export function DataManager() {
                                     className="h-8 bg-slate-900 border-slate-600 text-white" 
                                 />
                             </TableCell>
+                            <TableCell className="text-slate-400 text-sm">
+                                {col.description || '-'}
+                            </TableCell>
                             <TableCell>
                                 <select 
                                     value={col.columnRole} 
@@ -462,7 +593,7 @@ export function DataManager() {
                         ))}
                         {columns.length === 0 && (
                              <TableRow>
-                                <TableCell colSpan={4} className="text-center text-slate-500 py-8">请选择左侧数据表以加载字段</TableCell>
+                                <TableCell colSpan={5} className="text-center text-slate-500 py-8">请选择左侧数据表以加载字段</TableCell>
                              </TableRow>
                         )}
                         </TableBody>

@@ -1,0 +1,5 @@
+{
+  "user_query": "中小企业贷款最高限额是多少？",
+  "retrieved_context": "[Doc 1: SME Loan Policy 2024] 中小企业贷款最高额度限制为500万元人民币...",
+  "expected_answer": "根据现有政策，中小企业贷款最高限额为**500万元人民币**。[Doc 1]"
+}

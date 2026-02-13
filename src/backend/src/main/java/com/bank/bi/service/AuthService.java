@@ -28,7 +28,6 @@ public class AuthService {
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
-    private final PasswordEncoder passwordEncoder;
     
     /**
      * 用户登录
@@ -36,9 +35,7 @@ public class AuthService {
     public Map<String, Object> login(String username, String password, String ipAddress) {
         try {
             // 认证
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(username, password)
-            );
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
             
             // 查找用户
             User user = userRepository.findByUsername(username)
@@ -84,7 +81,7 @@ public class AuthService {
      * 获取当前用户信息
      */
     public UserInfoVO getCurrentUserInfo(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(java.util.Objects.requireNonNull(userId))
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
         
         return UserInfoVO.builder()

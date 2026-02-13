@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -25,7 +24,7 @@ public class PanelService {
      * Get all panels accessible to the user (Personal + Team)
      */
     public List<Panel> getUserPanels(Long userId) {
-        List<Panel> personalPanels = panelRepository.findByUserId(userId);
+        List<Panel> personalPanels = panelRepository.findByUserId(java.util.Objects.requireNonNull(userId));
         List<Panel> teamPanels = panelRepository.findByType(Panel.PanelType.TEAM);
         
         List<Panel> allPanels = new ArrayList<>(personalPanels);
@@ -49,7 +48,7 @@ public class PanelService {
     public Panel createPanel(String name, Long userId, Panel.PanelType type) {
         Panel panel = Panel.builder()
                 .name(name)
-                .userId(userId)
+                .userId(java.util.Objects.requireNonNull(userId))
                 .type(type)
                 .items(new ArrayList<>())
                 .build();
@@ -58,7 +57,7 @@ public class PanelService {
 
     @Transactional
     public PanelItem pinItem(Long panelId, String question, String chartType, String layoutConfig, Long userId) {
-        Panel panel = panelRepository.findById(panelId)
+        Panel panel = panelRepository.findById(java.util.Objects.requireNonNull(panelId))
                 .orElseThrow(() -> new RuntimeException("Panel not found"));
         
         // Permission check: Only owner can edit Personal panel; 
@@ -84,9 +83,9 @@ public class PanelService {
 
     @Transactional
     public void deletePanel(Long panelId, Long userId) {
-        Panel panel = panelRepository.findById(panelId)
+        Panel panel = panelRepository.findById(java.util.Objects.requireNonNull(panelId))
                 .orElseThrow(() -> new RuntimeException("Panel not found"));
-        if (!panel.getUserId().equals(userId)) {
+        if (!panel.getUserId().equals(java.util.Objects.requireNonNull(userId))) {
              // throw new RuntimeException("No permission");
              // For simplicity in this demo, let's allow if user owns it. 
              // Admin check logic omitted for brevity.
@@ -97,6 +96,6 @@ public class PanelService {
     @Transactional
     public void deleteItem(Long itemId, Long userId) {
         // Similar permission logic
-        panelItemRepository.deleteById(itemId);
+        panelItemRepository.deleteById(java.util.Objects.requireNonNull(itemId));
     }
 }

@@ -29,6 +29,9 @@ public class DataTable {
     
     @Column(nullable = false)
     private String displayName; // 显示名称
+
+    @Column(length = 50)
+    private String domain; // 所属领域 (e.g., deposit, loan, transaction, customer)
     
     private String description;
     

@@ -20,73 +20,36 @@ public class DataManagementController {
     private final DataManagementService dataManagementService;
 
     /**
-     * 上传 CSV 数据文件
+     * 导入Schema
      */
-    @PostMapping("/upload")
-    public ResponseUtil.Result<DataTable> uploadData(
+    @PostMapping("/schema/import")
+    public ResponseUtil.Result<List<String>> importSchema(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "tableName", required = false) String tableName,
+            @RequestParam(value = "domain", required = false) String domain,
             HttpServletRequest request) {
-        if (file.isEmpty()) {
-            return ResponseUtil.error("文件不能为空");
-        }
         try {
             Long userId = getUserId(request);
-            
-            String finalTableName = tableName;
-            if (finalTableName == null || finalTableName.trim().isEmpty()) {
-                finalTableName = file.getOriginalFilename();
-                if (finalTableName != null && finalTableName.lastIndexOf('.') > 0) {
-                    finalTableName = finalTableName.substring(0, finalTableName.lastIndexOf('.'));
-                }
-                // Fallback if filename is still null or empty
-                if (finalTableName == null || finalTableName.trim().isEmpty()) {
-                    finalTableName = "Uploaded_Data_" + System.currentTimeMillis();
-                }
-            }
-            
-            // 兼容旧接口，仍然保留自动上传
-            return ResponseUtil.success(dataManagementService.uploadData(file, finalTableName, userId));
+            return ResponseUtil.success(dataManagementService.importSchema(file, userId, domain));
         } catch (Exception e) {
-            log.error("上传失败", e);
-            return ResponseUtil.error("上传失败: " + e.getMessage());
+            log.error("Schema导入失败", e);
+            return ResponseUtil.error("Schema导入失败: " + e.getMessage());
         }
     }
 
     /**
-     * 步骤1：预览数据（不入库）
+     * 导入数据
      */
-    @PostMapping("/preview")
-    public ResponseUtil.Result<java.util.Map<String, Object>> previewData(@RequestParam("file") MultipartFile file) {
-        if (file.isEmpty()) {
-            return ResponseUtil.error("文件不能为空");
-        }
-        try {
-            return ResponseUtil.success(dataManagementService.previewCsv(file));
-        } catch (Exception e) {
-            log.error("预览失败", e);
-            return ResponseUtil.error("预览失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 步骤2：确认并入库
-     */
-    @PostMapping("/confirm")
-    public ResponseUtil.Result<DataTable> confirmData(
+    @PostMapping("/import")
+    public ResponseUtil.Result<String> importData(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("tableName") String tableName,
-            @RequestParam("schema") String schemaJson,
+            @RequestParam(value = "mode", defaultValue = "append") String mode,
             HttpServletRequest request) {
-        if (file.isEmpty()) {
-            return ResponseUtil.error("文件不能为空");
-        }
         try {
             Long userId = getUserId(request);
-            return ResponseUtil.success(dataManagementService.confirmImport(file, tableName, schemaJson, userId));
+            return ResponseUtil.success(dataManagementService.importData(file, mode, userId));
         } catch (Exception e) {
-            log.error("导入失败", e);
-            return ResponseUtil.error("导入失败: " + e.getMessage());
+            log.error("数据导入失败", e);
+            return ResponseUtil.error("数据导入失败: " + e.getMessage());
         }
     }
 

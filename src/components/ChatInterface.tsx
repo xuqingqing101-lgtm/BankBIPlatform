@@ -20,6 +20,7 @@ interface Message {
     data: any;
   };
   insights?: string[];
+  txId?: string; // Transaction ID for tracing
 }
 
 const suggestedQuestions = [
@@ -83,10 +84,11 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
         const aiMessage: Message = {
           id: messages.length + 2,
           type: 'assistant',
-          content: res.data.response,
+          content: res.data.response || res.data.content, // Compatible with both structures
           timestamp: new Date(),
           query: currentQuery,
           visualization: res.data.visualization,
+          txId: res.data.txId,
         };
         setMessages(prev => [...prev, aiMessage]);
       } else {
@@ -126,7 +128,7 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-slate-900/50">
+    <div className="flex-1 flex flex-col min-h-[400px] bg-slate-900/50">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 scroll-smooth" ref={scrollRef}>
         <div className="max-w-5xl mx-auto space-y-6">
@@ -234,6 +236,11 @@ export function ChatInterface({ onNavigate, onPin }: ChatInterfaceProps = {}) {
                   <div className="flex-1 space-y-4 min-w-0">
                     <div className="group relative">
                       <Card className="p-5 bg-slate-800/80 border-slate-700/50 shadow-xl backdrop-blur-md rounded-2xl rounded-tl-none">
+                        {message.txId && (
+                          <span className="text-[10px] text-slate-500 absolute top-2 right-3 font-mono opacity-50 select-all">
+                            ID: {message.txId}
+                          </span>
+                        )}
                         <div className="prose prose-invert max-w-none">
                            <p className="text-slate-200 whitespace-pre-line leading-7 text-base">{message.content}</p>
                         </div>

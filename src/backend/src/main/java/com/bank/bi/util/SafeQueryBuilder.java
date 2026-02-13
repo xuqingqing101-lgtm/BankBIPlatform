@@ -162,6 +162,22 @@ public class SafeQueryBuilder {
         if (val == null) return "NULL";
         if (val instanceof Number) return val.toString();
         String s = val.toString();
+        
+        // Handle SQL Functions/Expressions without quoting (DANGER: Must be strict!)
+        // e.g. CURDATE(), NOW(), DATE_SUB(...)
+        String upper = s.toUpperCase().trim();
+        if (upper.startsWith("CURDATE()") || upper.startsWith("NOW()") || 
+            upper.startsWith("CURRENT_DATE") || upper.startsWith("CURRENT_TIMESTAMP") ||
+            upper.startsWith("DATE_SUB") || upper.startsWith("DATE_ADD") ||
+            (upper.contains("INTERVAL") && (upper.startsWith("CURDATE") || upper.startsWith("NOW")))) {
+            
+            // Basic validation to prevent arbitrary injection in "function" calls
+            // Only allow specific safe chars: A-Z, 0-9, _, (, ), +, -, space
+            if (s.matches("^[a-zA-Z0-9_\\(\\)\\+\\-\\s]+$")) {
+                return s;
+            }
+        }
+        
         // Basic escape for single quotes to prevent injection
         return "'" + s.replace("'", "''") + "'";
     }

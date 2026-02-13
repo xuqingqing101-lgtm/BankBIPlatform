@@ -1,0 +1,13 @@
+{
+  "user_query": "查询张三最近的5笔大额交易",
+  "expected_output": {
+    "table": "transaction",
+    "columns": ["trans_id", "trans_date", "amount", "type", "counterparty"],
+    "filters": [
+      {"column": "cust_name", "operator": "=", "value": "张三"},
+      {"column": "amount", "operator": ">=", "value": "10000"}
+    ],
+    "orderBy": ["amount DESC"],
+    "limit": 5
+  }
+}

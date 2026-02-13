@@ -36,6 +36,7 @@ public class KnowledgeService {
     private final KnowledgeDocumentRepository documentRepository;
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final com.bank.bi.skill.SkillRegistry skillRegistry;
 
     @Value("${app.upload.dir:uploads/knowledge}")
     private String uploadDir;
@@ -91,7 +92,7 @@ public class KnowledgeService {
                     .allowedRoles(allowedRoles)
                     .build();
 
-            return documentRepository.save(document);
+            return java.util.Objects.requireNonNull(documentRepository.save(document));
 
         } catch (IOException e) {
             log.error("文件上传失败", e);
@@ -114,7 +115,7 @@ public class KnowledgeService {
                 dir.mkdirs();
             }
             
-            String originalFilename = file.getOriginalFilename();
+            String originalFilename = java.util.Objects.requireNonNull(file.getOriginalFilename(), "originalFilename must not be null");
             String extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
             String storedFilename = UUID.randomUUID().toString() + "." + extension;
             File destFile = new File(dir, storedFilename);
@@ -143,7 +144,7 @@ public class KnowledgeService {
                     .allowedRoles(allowedRoles)
                     .build();
 
-            return documentRepository.save(document);
+            return java.util.Objects.requireNonNull(documentRepository.save(document));
 
         } catch (IOException e) {
             log.error("文件上传失败", e);
@@ -163,7 +164,7 @@ public class KnowledgeService {
                 return "[图片文档] " + fileName + " (未安装OCR组件，仅存储文件)";
             }
             
-            // 简单清洗，限制长度
+            if (text == null) return "";
             return text.length() > 50000 ? text.substring(0, 50000) : text;
         } catch (Exception e) {
             log.warn("文本提取失败: {}", file.getName(), e);
@@ -193,11 +194,20 @@ public class KnowledgeService {
         }
         
         // 3. 构建AI请求 (Generate)
-        String systemPrompt = """
-            你是一个专业的银行知识库助手。请严格基于提供的【参考文档】回答用户的问题。
-            如果在【参考文档】中找不到答案，请直接说明“抱歉，知识库中暂时没有相关信息”，不要编造答案。
-            回答要求：准确、简洁、分点表述。引用文档时请标注[文档x]。
-            """;
+        String systemPrompt;
+        
+        // Try to load prompt from skill definition
+        var skillOpt = skillRegistry.get("knowledge_base");
+        if (skillOpt.isPresent() && skillOpt.get().getInstruction() != null) {
+            systemPrompt = skillOpt.get().getInstruction();
+        } else {
+             // Fallback
+             systemPrompt = """
+                你是一个专业的银行知识库助手。请严格基于提供的【参考文档】回答用户的问题。
+                如果在【参考文档】中找不到答案，请直接说明“抱歉，知识库中暂时没有相关信息”，不要编造答案。
+                回答要求：准确、简洁、分点表述。引用文档时请标注[文档x]。
+                """;
+        }
             
         String userContent = String.format("【参考文档】\n%s\n\n【用户问题】\n%s", 
             contextBuilder.toString(), query);
@@ -240,7 +250,7 @@ public class KnowledgeService {
      * 搜索文档
      */
     public List<KnowledgeDocument> search(String query, Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("用户不存在"));
+        User user = userRepository.findById(java.util.Objects.requireNonNull(userId)).orElseThrow(() -> new RuntimeException("用户不存在"));
         Set<Long> roleIds = user.getRoles().stream().map(Role::getRoleId).collect(Collectors.toSet());
         
         if (roleIds.isEmpty()) {
